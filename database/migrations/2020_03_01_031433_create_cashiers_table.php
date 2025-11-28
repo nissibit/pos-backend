@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateCashiersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('cashiers', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('user_id');
+            $table->dateTime('startime');
+            $table->dateTime('endtime')->nullable();
+            $table->double('initial')->default('0');
+            $table->double('informed')->default('0');
+            $table->double('present')->default('0');
+            $table->double('missing')->default('0');
+            $table->string('description')->nullable();
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('cashiers');
+    }
+}

@@ -1,0 +1,3 @@
+<strong>
+    Bem Vindo a XICOMPRA...
+</strong>

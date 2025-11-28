@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>report</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Audit.jrxml</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Documents/NetBeansProjects/Xicompra/src/main/resources/com/nissibit/xicompra/reports/Audit.jrxml</location>
+		</link>
+		<link>
+			<name>Audit_1.jrxml</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Documents/NetBeansProjects/Xicompra/src/main/resources/com/nissibit/xicompra/reports/Audit.jrxml</location>
+		</link>
+		<link>
+			<name>SplitTypePreventReport.46.subreport.1.jrxml</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Downloads/Sharing/jasperreports-master/jasperreports-master/jasperreports/tests/net/sf/jasperreports/bands/splittypeprevent/repo/SplitTypePreventReport.46.subreport.1.jrxml</location>
+		</link>
+		<link>
+			<name>invoice.jasper</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Downloads/Sharing/Sistemas/ElectroFiel/src/rh/report/invoice.jasper</location>
+		</link>
+		<link>
+			<name>invoice.jrxml</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Downloads/Sharing/Sistemas/ElectroFiel/src/rh/report/invoice.jrxml</location>
+		</link>
+		<link>
+			<name>processo.jrxml</name>
+			<type>1</type>
+			<location>C:/Users/TNS Programmer/Downloads/Sharing/Sistemas/NissiRH/src/rh/report/processo.jrxml</location>
+		</link>
+	</linkedResources>
+</projectDescription>
