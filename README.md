@@ -1,2 +1,2 @@
-# cabomoz
-Sistema de Gestao de Stock e Vendas e Contabilidade
+# POS - NISSI
+Backend - Sistema de Gestão de Stock e Facturação!
