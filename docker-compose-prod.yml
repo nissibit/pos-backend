@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # O Servidor Web (Nginx) - Para Servir o Front-end e Encaminhar o PHP
+  app_nginx:
+    image: nginx:alpine
+    container_name: pos-nginx
+    # Expõe APENAS a porta do Nginx para o mundo externo
+    ports:
+      - "80:80" # Porta 80 é padrão para HTTP em produção
+    volumes:
+      # Mapeia o arquivo de configuração de produção do Nginx
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - pos-backend # Nginx precisa do PHP
+    restart: always
+
+  # O Serviço de Processamento PHP (FPM)
+  pos-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nissibi/pos-backend:1.0
+    container_name: pos-backend
+    # Em Produção: NENHUM mapeamento de volume de código. 
+    # O código já está na imagem, copiado via Dockerfile (Multi-stage build).
+    depends_on:
+      pos-mysql:
+        condition: service_healthy # Espera o DB estar pronto e saudável
+    restart: always
+
+  # O Servidor MySQL (Banco de Dados)
+  pos-mysql:
+    image: mysql:8.4
+    container_name: pos-mysql
+    # REMOVIDO: A porta 3306 não é exposta para o host, apenas para a rede Docker.
+    environment:
+      # Use estas variáveis para injetar segredos de produção
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # ESSENCIAL para persistência dos dados
+      - mysql-8.4:/var/lib/mysql
+    healthcheck: # Healthcheck é crucial em produção
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      start_period: 30s
+    restart: always
+
+  # Serviço phpMyAdmin (Opcional - Acessível apenas via SSH Tunnel ou VPN segura)
+  # Normalmente, é omitido ou protegido em produção. Se usado, não exponha na porta 80.
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pos-phpmyadmin
+    # Use uma porta não padrão, mas MUITO protegida. 
+    # Em cenários de produção real, use um SSH Tunnel para acessar o phpmyadmin.
+    ports:
+      - "8082:80" 
+    environment:
+      PMA_HOST: pos-mysql 
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - pos-mysql
+    restart: always
+
+# Volumes Nomeados Persistentes
+volumes:
+  mysql-8.4:

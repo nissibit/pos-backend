@@ -2,21 +2,21 @@
 
 namespace App;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use App\Permission;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements Auditable, CanResetPassword {
 
-    use Notifiable;
-    use SoftDeletes;
+    use Notifiable, SoftDeletes, HasApiTokens;
     use \OwenIt\Auditing\Auditable;
     use \Askedio\SoftCascade\Traits\SoftCascadeTrait;
     use \Illuminate\Auth\Passwords\CanResetPassword;
+
 
     /**
      * The attributes that are mass assignable.

@@ -21,9 +21,10 @@ class Cashier extends Model implements Auditable {
         'missing',
         'description'
     ];
-    protected $dates = [
-        'startime',
-        'endtime'
+
+    protected $casts  = [
+        'startime' => 'datetime',
+        'endtime' => 'datetime',
     ];
 
     public function generateTags(): array {

@@ -1,0 +1,68 @@
+FROM php:8.3-fpm-alpine AS builder
+
+WORKDIR /var/www/html
+
+# Instala dependências do sistema necessárias para o PHP e o Composer
+RUN apk add --no-cache \
+    $PHPIZE_DEPS \
+    git \
+    zip \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    && docker-php-ext-install pdo_mysql opcache gd exif
+
+# Instala o Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# 2. Copia o Código e Instala Dependências
+# Copia apenas os arquivos de configuração do Composer e do Laravel para o cache
+COPY composer.json composer.lock ./
+COPY database database/
+COPY config config/
+
+# Instala as dependências do PHP (sem --dev para produção)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Copia o restante do código da aplicação
+COPY . .
+
+# 3. Otimização do Laravel
+# Executa a otimização de cache e configuração
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
+
+# Configura permissões de armazenamento (Storage)
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# --- FIM DO ESTÁGIO 1: BUILDER ---
+
+# Estágio 2: Production - Cria a imagem final leve
+
+# Usamos a mesma imagem base leve (alpine)
+FROM php:8.3-fpm-alpine AS final
+
+# 1. Configurações de Produção
+WORKDIR /var/www/html
+
+# Desabilita o cache de usuários e grupos (melhora o tempo de inicialização)
+RUN rm -rf /etc/php8/conf.d/*-opcache.ini && \
+    rm -rf /etc/php8/conf.d/*-xdebug.ini
+
+# Configurações otimizadas de PHP FPM e OPcache
+COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
+COPY ./docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# 2. Copia Artefatos do Estágio Builder
+# Copia APENAS os arquivos necessários do estágio 'builder' (código + vendor + caches)
+COPY --from=builder /var/www/html /var/www/html
+
+# 3. Ponto de Entrada (Entrypoint)
+# Expõe a porta FPM
+EXPOSE 9000
+
+# Comando padrão para iniciar o PHP-FPM
+CMD ["php-fpm"]

@@ -9,7 +9,7 @@
         {{ config('app.name', 'Nissi Bit') }} &circledR;
         
         <div class="alert alert-light">
-            <h2>{{ \Illuminate\Foundation\Inspiring::quote() }}</h2>
+            {{-- <h2>{{ \Illuminate\Foundation\Inspiring::quote() }}</h2> --}}
         </div>
     </div>
 </div>

@@ -10,10 +10,13 @@
   | contains the "web" middleware group. Now create something great!
   |
  */
+
+use App\Http\Controllers\HomeController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
 Auth::routes(['register' => false]);
-Route::get('/test', function(){
-    dd( auth()->user()->roles->contains('name', ['Administrador', 'Tecnico']));
-});
+
 Route::get("/get-product", "ProductController@getProduct")->name("product.get.product");
 Route::get("/get-last-added", "ProductController@lastProductAdded")->name("product.get.last.added");
 Route::get("/item/add", "ProductController@Additems")->name("product.item.add");
@@ -23,7 +26,7 @@ Route::get("/product/{id}/resume-statistic/{from}/{to}", "ProductController@getS
 Route::get("/product/form/editable", "ProductController@formEditable")->name("product.form.editable");
 Route::get("/product/form/editable/add", "ProductController@postFormEditable")->name("product.form.editable.post");
 
-Route::get('/send/email', function() {
+Route::get('/send/email', function () {
     $credit = App\Models\Credit::first();
     $op = Mail::to(auth()->user())->send(new \App\Mail\SendMailTest($credit));
     echo $op;
@@ -36,7 +39,7 @@ Route::get('locale/{locale}', function ($locale) {
     return redirect()->back();
 })->name('locale');
 
-Route::get('/cancel-artigos', function() {
+Route::get('/cancel-artigos', function () {
     $items = auth()->user()->temp_items;
     foreach ($items as $item) {
         $item->delete();
@@ -46,7 +49,7 @@ Route::get('/cancel-artigos', function() {
     return redirect()->back()->with(['info' => __('messages.item.deleted')]);
 })->name('cancel.items');
 
-Route::get('/cancel-entries', function() {
+Route::get('/cancel-entries', function () {
     $items = auth()->user()->temp_entries;
     foreach ($items as $item) {
         $item->delete();
@@ -55,10 +58,10 @@ Route::get('/cancel-entries', function() {
 })->name('cancel.entries');
 
 
-Route::get('/about', function() {
+Route::get('/about', function () {
     return view('about.index');
 })->name('about');
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/permission/restore/{id}', 'PermissionController@restore');
 Route::get('/permission/restore/all', 'PermissionController@restoreAll');
 Route::get('/permission/set', 'PermissionController@setPermission')->name('permission-set');
@@ -78,7 +81,7 @@ Route::get('/mother/child/destroy/{id}', 'MotherController@destroyChild')->name(
 Route::post('/mother/child/restore', 'MotherController@restoreChild')->name('mother.child.restore');
 
 Route::get('/customer/list/autocomplete/{term?}', 'CustomerController@getCustomerAutoComplete')->name('customer.autocomplete');
-Route::get('/', function() {
+Route::get('/', function () {
     return redirect()->route('login');
 });
 
@@ -111,10 +114,10 @@ Route::post('/partner/search', 'PartnerController@search')->name('partner.search
 Route::post('/conversao/search', 'ConversaoController@search')->name('conversao.search');
 Route::post('/server/search', 'ServerController@search')->name('server.search');
 Route::get('/account/search', 'AccountController@search')->name('account.search');
-Route::get('/account/by-customer', function() {
+Route::get('/account/by-customer', function () {
     return view('account.search_by_customer');
 })->name('account.search.byCustomer');
-Route::get('/account/by-supplier', function() {
+Route::get('/account/by-supplier', function () {
     return view('account.search_by_supplier');
 })->name('account.search.bySupplier');
 Route::get('/credit/search', 'CreditController@search')->name('credit.search');
@@ -231,7 +234,7 @@ Route::get('/transference/print', 'TransferenceController@print')->name('transfe
 
 #View
 Route::get('/admin', "AdminController@index")->name("admin");
-Route::get("voltar", function() {
+Route::get("voltar", function () {
     return redirect()->back();
 })->name("voltar");
 

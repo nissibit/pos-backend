@@ -16,7 +16,7 @@
         </li>
     </ul>
     <div class="col text-center">
-        <strong class="text-uppercase"> {{ \App\Models\Company::first()->name }}</strong>
+        <strong class="text-uppercase"> {{ $company->name ?? 'N/A'}}</strong>
     </div>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
         <span class="navbar-toggler-icon"></span>

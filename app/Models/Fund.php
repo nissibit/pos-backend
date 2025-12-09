@@ -26,6 +26,10 @@ class Fund extends Model implements Auditable {
         'endtime'
     ];
 
+    protected $casts = [
+        'startime' => 'datetime:Y-m-d H:i:s',
+        'endtime' => 'datetime:Y-m-d H:i:s'
+    ];
     public function generateTags(): array {
         return [
             'Fund'
