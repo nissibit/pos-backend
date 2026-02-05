@@ -1,196 +1,45 @@
-<nav id="sidebar" class="">
-    <div class="sidebar-header text-center">
-        <img src="{{ asset('img/logo.png') }}" class="img-responsive img-rounded">
-        <!--<h3>{{-- config('app.name', 'Nissibit') --}}</h3>-->
-        <!--<i class="fas fa-shopping-cart fa-5x text-success"></i>-->
-        <strong>{{ config('app.short_name', 'NB')}}</strong>
-    </div>
-
-    <ul class="list-unstyled components">
-        <li class="{{ ($active ?? '') == 'home' ? 'active' : '' }}">
-            <a href="{{ route('home') }}" >
-                <i class="fas fa-home"></i>
-                @lang('messages.sidebar.home')
-            </a>
-        </li>
-        @can('menu_venda')        
-        <li class="{{ ($active ?? '') == 'factura' ? 'active' : '' }}">
-            <a href="{{ route('factura.index') }}">
-                <i class="fa fa-shopping-cart"></i>
-                @lang('messages.sidebar.sale')
-            </a>
-        </li>
-        @endcan
-        @can('menu_pag')   
-        <li class="{{ ($active ?? '') == 'payment' ? 'active' : '' }}">
-            <a href="{{ route('payment.index') }}">
-                <i class="fa fa-dollar-sign"></i>
-                @lang('messages.sidebar.payment')
-            </a>
-        </li>
-        @endcan  
-        @can('menu_fund')   
-        <li class="{{ ($active ?? '') == 'fund' ? 'active' : '' }}">
-            <a href="{{ route('fund.index') }}">
-                <i class="fa fa-coins"></i>
-                @lang('messages.sidebar.fund')
-            </a>
-        </li>
-        @endcan  
-        @can('menu_creditnote')   
-        <li class="{{ ($active ?? '') == 'creditnote' ? 'active' : '' }}">
-            <a href="{{ route('creditnote.index') }}">
-                <i class="fa fa-folder"></i>
-                @lang('messages.sidebar.creditnote')
-            </a>
-        </li>
-        @endcan  
-        @can("menu_output")
-        <li class="{{ ($active ?? '') == 'output' ? 'active' : '' }}">
-            <a href="{{ route('output.index') }}">
-                <i class="fa fa-handshake"></i>
-                @lang('messages.sidebar.output')
-            </a>
-        </li>
-        @endcan
-        @can("menu_quotation")
-        <li class="{{ ($active ?? '') == 'quotation' ? 'active' : '' }}">
-            <a href="{{ route('quotation.index') }}">
-                <i class="fas fa-file"></i>
-                @lang('messages.sidebar.quotation')
-            </a>
-        </li>
-        @endcan
-        @can("menu_credit")
-        <li class="{{ ($active ?? '') == 'credit' ? 'active' : '' }}">
-            <a href="{{ route('credit.index') }}">
-                <i class="fas fa-coins"></i>
-                @lang('messages.sidebar.credit')
-            </a>
-        </li>
-        @endcan
-        <li class="{{ ($active ?? '') == 'product' ? 'active' : '' }}">
-            <a href="#product" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                <i class="fas fa-cubes"></i>
-                @lang('messages.sidebar.product')
-            </a>
-            <ul class="collapse list-unstyled" id="product">
-                <li class="{{ ($subactive ?? '') == 'product_index' ? 'active' : '' }}">
-                    <a href="{{ route('product.index') }}"> @lang('messages.sidebar.records')</a>
-                </li>
-                @can("menu_category")
-                <li class="{{ ($subactive ?? '') == 'category_index' ? 'active' : '' }}">
-                    <a href="{{ route('category.index') }}"> @lang('messages.entity.category')</a>
-                </li>
-                @endcan
-                @can("menu_unity")
-                <li class="{{ ($subactive ?? '') == 'product_unity' ? 'active' : '' }}">
-                    <a href="{{ route('unity.index') }}"> @lang('messages.entity.unity')</a>
-                </li>
-                @endcan
-                @can("menu_conversion")
-                <li class="{{ ($subactive ?? '') == 'product_conversao' ? 'active' : '' }}">
-                    <a href="{{ route('conversao.index')}}">@lang('messages.entity.conversion') </a>
-                </li>
-                @endcan
-                @can("principal_create")
-                <li class="{{ ($subactive ?? '') == 'product_principal' ? 'active' : '' }}">
-                    <a href="{{ route('mother.index') }}"> Principal</a>
-                </li>
-                @endcan
-            </ul>
-        </li>
-        @can("menu_price")
-        <li class="{{ ($active ?? '') == 'price' ? 'active' : '' }}">
-            <a href="{{ route('price.index') }}">
-                <i class="fas fa-dollar-sign"></i>
-                @lang('messages.sidebar.price')
-            </a>
-        </li>
-        @endcan
-        @can("menu_customer")
-        <li class="{{ ($active ?? '') == 'customer' ? 'active' : '' }}">
-            <a href="#customer" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                <i class="fas fa-user"></i>
-                @lang('messages.sidebar.customer')
-            </a>
-            <ul class="collapse list-unstyled" id="customer">
-                <li class="{{ ($subactive ?? '') == 'customer_index' ? 'active' : '' }}">
-                    <a href="{{ route('customer.index') }}"> @lang('messages.sidebar.records')</a>
-                </li>
-                <li class="{{ ($subactive ?? '') == 'account_index' ? 'active' : '' }}">
-                    <a href="{{ route('account.index') }}"> @lang('messages.entity.account')</a>
-                </li>
-            </ul>
-        </li>
-        @endcan
-        @can("menu_partner")
-        <li class="{{ ($active ?? '') == 'partner' ? 'active' : '' }}">
-            <a href="#partner" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                <i class="fas fa-user"></i>
-                @lang('messages.sidebar.partner')
-            </a>
-            <ul class="collapse list-unstyled" id="partner">
-                <li class="{{ ($subactive ?? '') == 'partner_index' ? 'active' : '' }}">
-                    <a href="{{ route('partner.index') }}"> @lang('messages.sidebar.records')</a>
-                </li>
-                <li class="{{ ($subactive ?? '') == 'loan_index' ? 'active' : '' }}">
-                    <a href="{{ route('loan.index') }}"> Empréstimos</a>
-                </li>
-                <li class="{{ ($subactive ?? '') == 'loan_index' ? 'active' : '' }}">
-                    <a href="{{ route('devolution.index') }}"> Devoluções</a>
-                </li>
-            </ul>
-        </li>
-        @endcan
-        @can("menu_supplier")
-        <li class="{{ ($active ?? '') == 'server' ? 'active' : '' }}">
-            <a href="#server" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                <i class="fas fa-users"></i>
-                @lang('messages.sidebar.server')
-            </a>
-            <ul class="collapse list-unstyled" id="server">
-                <li class="{{ ($subactive ?? '') == 'server_index' ? 'active' : '' }}">
-                    <a href="{{ route('server.index') }}"> @lang('messages.sidebar.records')</a>
-                </li>
-                <li class="{{ ($subactive ?? '') == 'account_index' ? 'active' : '' }}">
-                    <a href="{{ route('account.index') }}"> @lang('messages.entity.account')</a>
-                </li>
-                <li class="{{ ($subactive ?? '') == 'invoice_index' ? 'active' : '' }}">
-                    <a href="{{ route('invoice.index') }}"> @lang('messages.entity.invoice')</a>
-                </li>
-            </ul>
-        </li>
-        @endcan
-        @can('menu_store')     
-        <li class="{{ ($active ?? '') == 'store' ? 'active' : '' }}">
-            <a href="{{ route('store.index') }}">
-                <i class="fas fa-building"></i>
-                @lang('messages.sidebar.store')
-            </a>
-        </li>
-        @endcan
-        @can("menu_stock")
-        <li class="{{ ($active ?? '') == 'stock' ? 'active' : '' }}">
-            <a href="{{ route('stock.index') }}">
-                <i class="fas fa-boxes"></i>
-                @lang('messages.sidebar.stock')
-            </a>
-        </li>
-        @endcan
-        @can('menu_admin')
-        <li class="{{ ($active ?? '') == 'admin' ? 'active' : '' }}">
-            <a href="{{ route('admin') }}">
-                <i class="fas fa-users-cog"></i>
-                @lang('messages.sidebar.admin')
-            </a>
-        </li>
-        @endcan
-        <li class="{{ ($active ?? '') == 'about' ? 'active' : '' }}">
-            <a href="{{ route('about') }}">
-                <i class="fas fa-info-circle"></i>
-                @lang('messages.sidebar.about')
-            </a>
-        </li>
+<div class="w3-bar-block w3-white w3-round-large w3-margin-top w3-display-container w3-topbar w3-bottombar w3-border-theme" style="height: 90vh;">
+    <a href="{{ route('home') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'home' ? 'active' : '' }}"><i class="fas fa-home"></i> @lang('messages.sidebar.home')</a>
+    @can('viewAny', [App\Models\Factura::class]) <a href="{{ route('factura.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'factura' ? 'active' : '' }}"><i class="fas fa-shopping-cart"></i> @lang('messages.sidebar.sale')</a> @endcan
+    <a href="{{ route('payment.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'payment' ? 'active' : '' }}"><i class="fas fa-dollar-sign"></i> @lang('messages.sidebar.payment')</a>
+    <a href="{{ route('fund.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'fund' ? 'active' : '' }}"><i class="fas fa-coins"></i> @lang('messages.sidebar.fund')</a>
+    <a href="{{ route('creditnote.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'creditnote' ? 'active' : '' }}"><i class="fas fa-folder"></i> @lang('messages.sidebar.creditnote')</a>
+    <a href="{{ route('output.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'output' ? 'active' : '' }}"><i class="fas fa-handshake"></i> @lang('messages.sidebar.output')</a>
+    <a href="{{ route('quotation.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'quotation' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.sidebar.quotation')</a>
+    <a href="{{ route('credit.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'credit' ? 'active' : '' }}"><i class="fas fa-coins"></i> @lang('messages.sidebar.credit')</a>
+    <a href="#product" onclick="accordion('product')" class="w3-bar-item w3-button {{ ($active ?? '') == 'product' ? 'product' : '' }}"><i class="fas fa-cubes"></i> @lang('messages.sidebar.product')</a>
+    <ul class="w3-hide" id="product">
+        <a href="{{ route('product.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'product_index' ? 'active' : '' }}"><i class="fas fa-list"></i> @lang('messages.sidebar.records')</a>
+        <a href="{{ route('category.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'category_index' ? 'active' : '' }}"><i class="fas fa-cube"></i> @lang('messages.entity.category')</a>
+        <a href="{{ route('unity.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'unity_index' ? 'active' : '' }}"><i class="fas fa-cube"></i> @lang('messages.entity.unity')</a>
+        <a href="{{ route('conversao.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'conversion_index' ? 'active' : '' }}"><i class="fas fa-exchange"></i> @lang('messages.entity.conversion')</a>
+        <a href="{{ route('mother.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'mother_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.mother')</a>
     </ul>
-</nav>
+    <a href="#customer" onclick="accordion('customer')" class="w3-bar-item w3-button {{ ($active ?? '') == 'customer' ? 'customer' : '' }}"><i class="fas fa-user"></i> @lang('messages.sidebar.customer')</a>
+    <ul class="w3-hide" id="customer">
+        <a href="{{ route('customer.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'customer_index' ? 'active' : '' }}"><i class="fas fa-list"></i> @lang('messages.sidebar.records')</a>
+        <a href="{{ route('account.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'account_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.account')</a>
+    </ul>
+    <a href="#partner"  onclick="accordion('partener')" class="w3-bar-item w3-button {{ ($active ?? '') == 'partner' ? 'partner' : '' }}"><i class="fas fa-user"></i> @lang('messages.sidebar.partner')</a>
+    <ul class="w3-hide" id="partner">
+        <a href="{{ route('partner.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'partner_index' ? 'active' : '' }}"><i class="fas fa-list"></i> @lang('messages.sidebar.records')</a>
+        <a href="{{ route('loan.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'loan_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.loan')</a>
+        <a href="{{ route('devolution.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'return_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.return')</a>
+    </ul>
+    <a href="#server"  onclick="accordion('server')" class="w3-bar-item w3-button {{ ($active ?? '') == 'server' ? 'server' : '' }}"><i class="fas fa-truck"></i> @lang('messages.sidebar.server')</a>
+    <ul class="w3-hide" id="server">
+        <a href="{{ route('server.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'server_index' ? 'active' : '' }}"><i class="fas fa-list"></i> @lang('messages.sidebar.records')</a>
+        <a href="{{ route('account.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'account_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.account')</a>
+        <a href="{{ route('invoice.index') }}" class="w3-bar-item w3-button {{ ($subactive ?? '') == 'invoice_index' ? 'active' : '' }}"><i class="fas fa-file"></i> @lang('messages.entity.invoice')</a>
+    </ul>
+
+    <div class="w3-bar-item w3-display-bottommiddle w3-round-large w3-border-top w3-border-theme ">
+        <div class="w3-flex" style="align-items: center; justify-content: space-between;">
+            <button type="button" class=" w3-round-large w3-theme-l2"><i class="fas fa-power-off"></i> sair</button>
+            <button type="button" class=" w3-round-large w3-theme-l2"><i class="fas fa-cog"></i></button>
+        </div>
+    </div>
+    <a href="{{ route('store.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'store' ? 'active' : '' }}"><i class="fas fa-building"></i> @lang('messages.sidebar.store')</a>
+    <a href="{{ route('stock.index') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'stock' ? 'active' : '' }}"><i class="fas fa-boxes"></i> @lang('messages.sidebar.stock')</a>
+    <a href="{{ route('admin') }}" class="w3-bar-item w3-button {{ ($active ?? '') == 'credit' ? 'active' : '' }}"><i class="fas fa-users-cog"></i> @lang('messages.sidebar.admin')</a>
+</div>

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Session;
 
 class HomeController extends Controller {
-
+    private User $user;
     private $limit = 10;
     /**
      * Create a new controller instance.
@@ -23,8 +25,8 @@ class HomeController extends Controller {
      * @return \Illuminate\Http\Response
      */
    public function index() {     
-        $user = auth()->user();
-        if ($user->hasAnyRoles("Administrador")) {
+        $this->user = Auth::user();
+        if ($this->user->hasAnyRoles("Administrador")) {
             $products= \App\Models\Product::doesntHave('parents')->whereHas('stocks', function($query){
                 $query->where("stocks.quantity", "<=", 'run_out');                
             })->latest()->paginate($this->limit);

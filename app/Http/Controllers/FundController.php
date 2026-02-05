@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Money\StoreFund;
 use App\Http\Requests\Money\UpdateFund;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class FundController extends Controller {
 
@@ -51,7 +52,7 @@ class FundController extends Controller {
         $data = $request->all();
         $data['present'] = $request->initial;
 //        dd($data);
-        if (auth()->user()->fund->where('endtime', null)->count() > 0) {
+        if (Auth::user()->fund->where('endtime', null)->count() > 0) {
             return redirect()->back()->with(['info' => 'Não pode iniciar um fundo sem terminar o aberto..']);
         }
         $insert = $this->fund->create($data);

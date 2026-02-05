@@ -11,6 +11,7 @@
   |
  */
 
+use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -129,18 +130,22 @@ Route::post('/invoice/search', 'InvoiceController@search')->name('invoice.search
 Route::get('/invoice/select/server', 'InvoiceController@selectServer')->name('invoice.select_server');
 Route::get('/credit/select/customer', 'CreditController@selectCustomer')->name('credit.select_customer');
 Route::post('/transference/search', 'TransferenceController@search')->name('transference.search');
-Route::get('/factura/search', 'FacturaController@search')->name('factura.search');
+#Facturas grouping routes
+Route::prefix('/factura')->group(function () {
+    Route::get('/search', 'FacturaController@search')->name('factura.search');
+    Route::get('/for-payment/{payed?}', [FacturaController::class, 'invoicesForPayment'])->name('factura.for.payment');
+    Route::get('/cancel', 'FacturaController@cancel')->name('factura.cancel');
+    Route::get('/direct', 'FacturaController@getDirect')->name('factura.direct');
+    Route::get('/history/destroy', 'FacturaController@historyAskedDestroy')->name('factura.history.destroy');
+    Route::post('/direct/post', 'FacturaController@postDirect')->name('factura.post.direct');
+    Route::post('/ask/destroy/{id}', 'FacturaController@askDestroy')->name('factura.ask.destroy');
+    Route::post('/cancel/ask/destroy/{id}', 'FacturaController@cancelAskDestroy')->name('factura.cancel.ask.destroy');
+    Route::get('/view/asked-destroy', 'FacturaController@viewAskedDestroy')->name('factura.view.ask.destroy');
+});
 Route::get('/loan/search', 'LoanController@search')->name('loan.search');
 Route::get('/devolution/search', 'DevolutionController@search')->name('devolution.search');
 Route::get('/payment/print', 'Report\FacturaReport@facturaJasper')->name('payment.print');
 Route::get('/payment/print/{id}', 'Report\FacturaReport@factura')->name('payment.print_simple');
-Route::get('/factura/cancel', 'FacturaController@cancel')->name('factura.cancel');
-Route::get('/factura/direct', 'FacturaController@getDirect')->name('factura.direct');
-Route::post('/factura/direct/post', 'FacturaController@postDirect')->name('factura.post.direct');
-Route::post('/factura/ask/destroy/{id}', 'FacturaController@askDestroy')->name('factura.ask.destroy');
-Route::post('/factura/cancel/ask/destroy/{id}', 'FacturaController@cancelAskDestroy')->name('factura.cancel.ask.destroy');
-Route::get('/factura/view/asked-destroy', 'FacturaController@viewAskedDestroy')->name('factura.view.ask.destroy');
-Route::get('/factura/history/destroy', 'FacturaController@historyAskedDestroy')->name('factura.history.destroy');
 Route::get('/quotation/search', 'QuotationController@search')->name('quotation.search');
 Route::get('/quotation/cancel', 'QuotationController@cancel')->name('quotation.cancel');
 Route::get('/cashier/search', 'CashierController@search')->name('cashier.search');

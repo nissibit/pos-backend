@@ -1,5 +1,9 @@
 @extends('layouts.xicompra')
 @section('content')
+<?php
+    $active = 'fund';
+    $subactive = 'fund_index';
+?>
 <div class="row">
     <div class="col-sm-12">
         <div class="card">

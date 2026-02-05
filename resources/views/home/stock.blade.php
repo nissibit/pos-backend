@@ -33,7 +33,7 @@
         <tfoot>
             <tr>
                 <td colspan="6" class="text-center">
-                    {{ $products->links() }}
+                    {{ $products->links('vendor.pagination.w3css')  }}
                 </td>
             </tr>
         </tfoot>

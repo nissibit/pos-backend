@@ -25,8 +25,8 @@ class Credit extends Model implements Auditable {
         'nr_factura',
         'payed'
     ];
-    protected $dates = [
-        'day'
+    protected $casts  = [
+        'day' => 'date'
     ];
 
     public function generateTags(): array {

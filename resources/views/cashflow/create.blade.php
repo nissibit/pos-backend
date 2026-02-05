@@ -22,7 +22,7 @@
                     <label for="type" class="control-label">Entrada/Saida <i class="fa fa-type"></i> </label>
                     <select class="form-control @error('type') is-invalid @enderror" name="type" >
                         <option value=""> ----- Seleccione ----- </option>
-                        @foreach(App\Base::cashFlowType() ?? array() as $type)
+                        @foreach(App\Models\Base::cashFlowType() ?? array() as $type)
                         <option value="{{ $type }}" {{ old('type', $cashflow ?? '')==$type ? 'selected' : '' }}>{{ $type }}</option>
                         @endforeach
                     </select>

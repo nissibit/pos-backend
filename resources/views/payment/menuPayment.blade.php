@@ -1,47 +1,47 @@
-<div class="row">
-    <div class="form-group col btn-group-sm">        
-        @can("pesquisa_payment")
-        <a href="{{ route('payment.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-list"> @lang('messages.payment.payments')</i>
-        </a>        
-        @endcan
-        <a href="{{ route('payment.credit.search') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-list"> @lang('messages.payment.credits')</i>
-        </a>
-        @can("list_cashier")
-        <a href="{{ route('cashier.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-list"> @lang('messages.payment.cashiers')</i>
-        </a>
-        @endcan
-        @if($open == 0)
-        <a href="{{ route('cashier.create') }}" class="btn btn-outline-secondary  ml-1">
-            <i class="fas fa-folder-open">  @lang('messages.payment.cashier_open')</i>
-        </a>
-        @else
-        <a href="{{ route('cashflow.create') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-plus-circle"> @lang('messages.entity.cashflow')</i>
-        </a>
-        <a href="{{ route('cashflow.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-list"> @lang('messages.entity.cashflow')</i>
-        </a>
-        @can("close_cashier")
-        <a href="{{ route('cashier.edit', $cashier->id ?? 0) }}" class="btn btn-outline-secondary  ml-1">
-            <i class="fas fa-check-circle">  @lang('messages.payment.cashier_close')</i>
-        </a>
-        @endcan
-        @endif
-    </div>
+<div class="w3-flex" style="grid-template-columns: auto 150px;">
+    <div class="w3-flex" style="gap: 8px;">
+        <div class="w3-dropdown-hover">
+            <x-button>
+                <i class="fas fa-dollar-sign"></i>
+                @lang('messages.entity.factura')
+            </x-button>
+            <div class="w3-dropdown-content w3-bar-block w3-border">
+                <a href="#" onclick="loadingInvoiceForPayment(false)" class="w3-bar-item w3-button"><i class="fas fa-search"></i> Não pagas</a>
+                <a href="#" onclick="loadingInvoiceForPayment(true)" class="w3-bar-item w3-button"><i class="fas fa-list"></i> Pagas</a>
+            </div>
+        </div>
+        <div class="w3-dropdown-hover">
+            <x-button>
+                <i class="fas fa-dollar-sign"></i>
+                @lang('messages.entity.payment')
+            </x-button>
+            <div class="w3-dropdown-content w3-bar-block w3-border">
+                <a href="{{ route('payment.index') }}" class="w3-bar-item w3-button"><i class="fas fa-search"></i> @lang('messages.payment.payments')</a>
+                <a href="{{ route('payment.credit.search') }}" class="w3-bar-item w3-button"><i class="fas fa-list"></i> @lang('messages.payment.credits')</a>
+            </div>
+        </div>
 
-    <div class="form-group col input-group-sm">
-        <form id="payment_search" role="form" autocomplete="off" action="{{ route('payment.search') }}" method="get" class="m-sm-1">
-            <div class="input-group-sm input-group">
-                <input type="text" name="criterio" class="form-control" placeholder="{{ __('messages.prompt.search') }}" required=""  value="{{ old('criterio', $dados['criterio'] ?? '') }}" >
-                <span class="input-group-btn btn-group-sm ">
-                    <button class="btn btn-outline-primary" type="submit">
-                        <i class="fas fa-search"> </i>
-                    </button>
-                </span>
-            </div>                                  
-        </form>
-    </div>    
-</div> 
+        <div class="w3-dropdown-hover">
+            <x-button>
+                <i class="fas fa-dollar-sign"></i>
+                @lang('messages.entity.cashflow')
+            </x-button>
+            <div class="w3-dropdown-content w3-bar-block w3-border">
+                <a href="{{ route('cashflow.index') }}" class="w3-bar-item w3-button"><i class="fas fa-list"></i> @lang('messages.button.list')</a>
+                <a href="{{ route('cashflow.create') }}" class="w3-bar-item w3-button"><i class="fas fa-plus-circle"></i> @lang('messages.button.new')</a>
+            </div>
+        </div>
+
+
+        <div class="w3-dropdown-hover">
+            <x-button>
+                <i class="fas fa-dollar-sign"></i>
+                @lang('messages.entity.cashier')
+            </x-button>
+            <div class="w3-dropdown-content w3-bar-block w3-border">
+                <a href="{{ route('cashier.index') }}" class="w3-bar-item w3-button"><i class="fas fa-list"></i> @lang('messages.button.list')</a>
+                <a href="{{ route('cashier.create') }}" class="w3-bar-item w3-button"><i class="fas fa-plus-circle"></i> @lang('messages.button.new')</a>
+            </div>
+        </div>
+    </div>
+</div>

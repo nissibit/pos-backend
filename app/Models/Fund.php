@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\User;
 
 class Fund extends Model implements Auditable {
 
@@ -37,7 +38,7 @@ class Fund extends Model implements Auditable {
     }
 
     public function user() {
-        return $this->belongsTo(\App\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function moneyflows() {

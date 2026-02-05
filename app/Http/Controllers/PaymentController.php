@@ -12,6 +12,7 @@ use App\Models\Currency;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Account;
+use Illuminate\Support\Facades\Auth as Auth;
 
 class PaymentController extends Controller
 {
@@ -35,7 +36,7 @@ class PaymentController extends Controller
     {
         $facturas = Factura::latest()->orWhere('payed', false)->where("destroy_username", null)->paginate($this->limit);
         $payments = $this->payment->latest()->whereDate('created_at', Carbon::today())->paginate($this->limit);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.index', compact('facturas', 'payments', 'open', 'cashier'));
     }
@@ -48,7 +49,7 @@ class PaymentController extends Controller
     public function selectCustomer()
     {
         $accounts = Payment::latest()->take($this->limit)->get();
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.select_customer', compact('accounts', 'open', 'cashier'));
     }
@@ -62,7 +63,7 @@ class PaymentController extends Controller
             $factura = Credit::find($request->credit ?? 0);
         }
         $currencies = Currency::all();
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         if ($factura != null) {
             return view('payment.createFactura', compact('factura', 'currencies', 'open', 'cashier'));
@@ -81,10 +82,10 @@ class PaymentController extends Controller
     {
         //        dd($request->all());
         DB::beginTransaction();
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         try {
-            $paymentitems = auth()->user()->temp_payment_items;
+            $paymentitems = Auth::user()->temp_payment_items;
             if ($request->account != null) {
                 $entity = Credit::find($request->factura) ?? null;
             } else {
@@ -152,7 +153,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment)
     {
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
 
         return view('payment.show', compact('payment', 'open', 'cashier', 'payment'));
@@ -167,7 +168,7 @@ class PaymentController extends Controller
     public function edit(Payment $payment)
     {
         $accounts = Payment::latest()->get();
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.edit', compact('payment', 'accounts', 'open', 'cashier'));
     }
@@ -188,7 +189,7 @@ class PaymentController extends Controller
         $payment->balance = $request->balance;
         $payment->discount = $request->discount;
         $update = $payment->update();
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         if ($update) {
             return redirect()->route('payment.show', $payment->id)->with(['sucesso' => __('messages.msg.update'), 'open' => $open]);
@@ -205,7 +206,7 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment)
     {
-        //        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        //        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
 
         $cashier = $payment->cashier;
         $open = ($cashier != null) ? $cashier->count() : 0;
@@ -265,18 +266,18 @@ class PaymentController extends Controller
                 }
             })
             ->latest()->paginate($this->limit);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.search', compact('dados', 'payments', 'open', 'cashier'));
     }
 
     public function cancel(Request $request)
     {
-        $paymentitems = auth()->user()->temp_payment_items;
+        $paymentitems = Auth::user()->temp_payment_items;
         foreach ($paymentitems as $paymentitem) {
             $paymentitem->delete();
         }
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return redirect()->route('payment.index')->with(['info' => __('messages.item.deleted'), 'open' => $open]);
     }
@@ -306,7 +307,7 @@ class PaymentController extends Controller
             ->latest()->paginate();
         // ->toSql();
         // dd($payments);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
 
         return view('payment.search_credit', compact('dados', 'payments', 'cashier', 'open'));

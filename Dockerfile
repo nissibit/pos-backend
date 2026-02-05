@@ -1,3 +1,25 @@
+# ----------------------------------------------------------------------
+# ESTÁGIO 1: BUILDER DE NODE (Para compilar assets JS/CSS/SASS)
+# ----------------------------------------------------------------------
+FROM node:20-alpine AS node_builder
+
+# Define o diretório de trabalho para onde os assets serão copiados
+WORKDIR ./
+
+# Copia os arquivos de configuração do Node
+COPY package.json package-lock.json ./
+
+# Instala as dependências do Node (incluindo Bootstrap via NPM)
+RUN npm install
+
+# Copia o restante do código (recursos, etc.)
+COPY . .
+
+# Executa o script de compilação (Laravel Mix, Vite, etc.)
+# Substitua 'prod' pelo comando que seu projeto usa para compilar assets de produção
+RUN npm run watch
+
+
 FROM php:8.3-fpm-alpine
 
 # Instale dependências e extensões PHP de forma mais robusta

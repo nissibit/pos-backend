@@ -1,4 +1,4 @@
-@extends('layouts.xicompra')
+@extends('layouts.base')
 @section('content')
 <?php
 $active = 'home';
@@ -29,8 +29,5 @@ $active = 'home';
         </div>
     </div>
     @endif
-    <div class="alert alert-light">
-        <h2>{{ \Illuminate\Foundation\Inspiring::quote() }}</h2>
-    </div>
 </div>
 @endsection

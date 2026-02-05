@@ -1,6 +1,6 @@
 <div class="row">
     <div class="form-group col btn-group-sm">   
-        @can('create_factura')
+        @can('create', [App\Model\Factura::class])
         <a href="{{ route('factura.create') }}" class="btn btn-outline-secondary  ml-1">
             <i class="fas fa-plus-circle"> criar</i>
         </a>

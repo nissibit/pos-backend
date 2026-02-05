@@ -140,6 +140,9 @@ return [
     'entity.role' => 'Perfil',
     'entity.conversion' => 'Conversão',
     'entity.sale' => 'Venda',
+    'entity.mother' => 'Principal',    
+    'entity.loan' => 'Empréstimos',
+    'entity.return' => 'Devoluções',
     #Others
     'audits.id' => 'Código',
     'audits.user_type' => 'Tipo do Utilizador',

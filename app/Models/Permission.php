@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,7 +25,7 @@ class Permission extends Model implements Auditable
     ];
     
     public function roles() {
-        return $this->belongsToMany(\App\Role::class);
+        return $this->belongsToMany(Role::class);
     }
     
     

@@ -17,7 +17,7 @@
         <tr>
             <td><a href="{{ route('mother.show', $product->id) }}"> {{ $product->barcode }} </a></td>
             <td><a href="{{ route('mother.show', $product->id) }}"> {{ $product->name }} </a></td>
-            <td><a href="{{ route('mother.show', $product->id) }}"> {{ \App\Base::strPart($product->label) }} </a></td>
+            <td><a href="{{ route('mother.show', $product->id) }}"> {{ \app\Models\Base::strPart($product->label) }} </a></td>
             <td class="text-right"><a href="{{ route('mother.show', $product->id) }}"> {{ number_format($product->stock()->first()->quantity ?? 0, 2) }}</a></td>
             <td><a href="{{ route('mother.show', $product->id) }}"> {{ $product->category->name }}</a></td>
             <td><a href="{{ route('mother.show', $product->id) }}"> {{ $product->unity->name }}</a></td>

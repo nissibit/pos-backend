@@ -17,7 +17,7 @@ use function auth;
 use function GuzzleHttp\json_encode;
 use function redirect;
 use function view;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\Conversao;
 use App\Http\Requests\Product\StoreProductChild;
 use App\Models\ProductChild;
@@ -41,7 +41,7 @@ class MotherController extends Controller {
     public function index() {
 //        $products = $this->product->latest()->take($this->limit)->get();
         $products = $this->product->where('search', false)->latest()->paginate($this->limit);
-        return view('mother.index', compact('products', 'categories'));
+        return view('mother.index', compact('products'));
     }
 
     /**

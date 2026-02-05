@@ -9,7 +9,7 @@
         <div class="card">
             <div class="card-header">
                 <h2><i class="fas fa-handshake"> Painel de Preços  </i></h2>
-                @include('price.menuprice')
+                @include('price.menuPrice')
             </div>
             <div class="card-body">
                 @include('menu.alert')

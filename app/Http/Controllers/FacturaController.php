@@ -10,29 +10,49 @@ use App\Models\Store;
 use App\Models\Product;
 use App\Models\Stock;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\ProductChild;
 use App\Models\Currency;
 use App\Models\TempPaymentItem;
 use App\Models\RunOutSell;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
-class FacturaController extends Controller {
+class FacturaController extends Controller
+{
 
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    private $factura;
+    private Factura $factura;
     private $limit = 10;
+    private User $user;
 
-    function __construct(Factura $factura) {
+    function __construct(Factura $factura)
+    {
         $this->factura = $factura;
-        $this->middleware(['auth', 'revalidate']);
+        // Injeção de dependência do usuário autenticado no construtor
+        $this->middleware(function ($request, $next) {
+            $this->user = Auth::user();
+            return $next($request);
+        });
+        $this->middleware(['auth']);
     }
 
-    public function index() {
-        $facturas = Factura::latest()->whereDate('created_at', Carbon::today())->orWhere('payed', false)->paginate($this->limit);
+    public function index()
+    {
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $facturas = Factura::select('id', 'customer_name', 'total', 'day')
+            ->where(function ($query) use ($today, $tomorrow) {
+                $query->whereBetween('created_at', [$today, $tomorrow])
+                    ->orWhere('payed', false);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->limit);
         return view('factura.index', compact('facturas'));
     }
 
@@ -41,58 +61,80 @@ class FacturaController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function selectCustomer() {
+    public function selectCustomer()
+    {
         $accounts = Factura::latest()->take($this->limit)->get();
         return view('factura.select_customer', compact('accounts'));
     }
 
-    public function create() {
-        $store = Store::first();
-        if ($store == null) {
-            return redirect()->back()->withInput()->with('info', __('messages.sale.request_store'));
-        }
-        return view('factura.create', compact('store'));
+    public function create()
+    {
+        Gate::allows('show', Factura::class);
+        return view('factura.create', ['today' => today()]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\Account\StoreFactura  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreFactura $request) {
+    public function store(StoreFactura $request)
+    {
         DB::beginTransaction();
         try {
-            $items = auth()->user()->temp_items;
+            // Usando $this->user injetado no construtor
+            $items = $this->user->temp_items;
+
             $subtotal = $items->sum('subtotal');
             $discount = $request->discount;
-            $discountp = $discount/$subtotal*100;
+
+            // Tratamento de divisão por zero
+            $discountp = $subtotal > 0 ? ($discount / $subtotal * 100) : 0;
+
             $request->merge([
                 "subtotal" => $subtotal,
                 "discountp" => $discountp,
                 "total" => round($subtotal - $discount)
             ]);
-            $runOutItems = array();
+
+            $runOutItems = [];
             $store = Store::find($request->store_id);
+
+            // --- FASE 1: VERIFICAÇÃO DE ESTOQUE COM BLOQUEIO PESSIMISTA ---
+
+            if ($store == null) {
+                DB::rollBack();
+                return redirect()->back()->withInput()->with('falha', __('messages.sale.request_store'));
+            }
+
             foreach ($items as $item) {
                 if ($item->quantity > 0) {
                     $product = Product::find($item->product_id);
-                    
-                    if ($product->category->checkStock) {
-                        $productParent = ProductChild::where('child', $item->product_id)->first();
-                    # dd($productParent);
-                        $stock = Stock::where('product_id', ($productParent != null ? $productParent->parent : $item->product_id))->where('store_id', $store->id)->first();
-                        // if($stock == null){
-                        //     return redirect()->back()->with('falha', 'Não foi possível continuar porque ocorreu um erro ao verificar estoque do produto '.$item->name);
-                        // }
-                        $quantity = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
-                        $resto = $stock != null ? $stock->quantity : 0;
 
-                        if ($stock == null ) {
-                            return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_stock') . "{$product->name} - [$resto]  {$store->name}."]);
-                        }
-                        if($quantity > $stock->quantity){
-                            
+                    if (!$product || !$product->category->checkStock) {
+                        continue; // Não checar ou produto não encontrado
+                    }
+
+                    $productParent = ProductChild::where('child', $item->product_id)->first();
+                    $stockProductId = $productParent != null ? $productParent->parent : $item->product_id;
+                    $quantityNeeded = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
+
+                    // BLOQUEIO PESSIMISTA: lockForUpdate() garante que a linha Stock não será alterada 
+                    // por outro processo enquanto a transação estiver ativa.
+                    $stock = Stock::where('product_id', $stockProductId)
+                        ->where('store_id', $store->id)
+                        ->lockForUpdate() // BLOQUEIO AQUI
+                        ->first();
+
+                    $resto = $stock != null ? $stock->quantity : 0;
+
+                    if ($stock == null) {
+                        DB::rollBack();
+                        return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_stock') . " {$product->name} - [$resto] {$store->name}."]);
+                    }
+
+                    if ($quantityNeeded > $stock->quantity) {
                         $runOutItems[] = [
                             'quantity_available' => $stock->quantity,
                             'barcode' => $item->barcode,
@@ -103,24 +145,25 @@ class FacturaController extends Controller {
                             'rate' => $item->rate,
                             'subtotal' => $item->subtotal,
                         ];
-                        }
-                           
-                       
                     }
                 }
             }
 
+            // ... (Validações de cliente e total)
             if ($request->customer_name == null) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_name')]);
             }
             if ($request->total <= 0) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_items')]);
             }
-            $ans = array();
-            $factura = $this->factura->create($request->all());
-            $ans[] = $factura;
-            foreach ($items as $item) {
 
+            // --- FASE 2: CRIAÇÃO DA FATURA E ATUALIZAÇÃO ATÔMICA DO ESTOQUE ---
+
+            $factura = $this->factura->create($request->all());
+
+            foreach ($items as $item) {
                 if ($item->quantity > 0) {
                     $data = [
                         'barcode' => $item->barcode,
@@ -131,39 +174,46 @@ class FacturaController extends Controller {
                         'rate' => $item->rate,
                         'subtotal' => $item->subtotal,
                     ];
+
                     $productParent = ProductChild::where('child', $item->product_id)->first();
-# dd($productParent);
-                    $stock = Stock::where('product_id', ($productParent != null ? $productParent->parent : $item->product_id))->where('store_id', $store->id)->first();
-                    if ($stock == null) {
-                        return redirect()->back()->withInput()->with(['falha' => "O produto {$item->name} não tem/existe stock!"]);
-                    }
-//                    $stock = Stock::where('product_id', $item->product_id)->where('store_id', $request->store_id)->first();
-                    $quantity = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
-                    $stock->quantity -= $quantity;
-                    $stock->operation = "Venda: {$factura->id}";
-                    $ans[] = $factura->items()->create($data);
-                    $ans[] = $stock->update(); // 
-                    $item->delete();
+                    $stockProductId = $productParent != null ? $productParent->parent : $item->product_id;
+                    $quantityToDecrement = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
+
+                    // Re-obter o Stock (já bloqueado na fase 1)
+                    $stockQuery = Stock::where('product_id', $stockProductId)->where('store_id', $store->id);
+
+                    // ATUALIZAÇÃO ATÔMICA: Usar decrement() para evitar race conditions
+                    // A operação de decremento e a escrita da operação são feitas em uma única query
+                    $stockQuery->decrement('quantity', $quantityToDecrement, [
+                        'operation' => "Venda: {$factura->id}"
+                    ]);
+
+                    $factura->items()->create($data);
+                    $item->delete(); // Remove o item temporário
+
                     //Add Quantity of saled product
                     if ($productParent != null) {
+                        // Não há necessidade de bloqueio aqui, mas pode usar incremento atômico se houver concorrência
                         $productParent->sales += $item->quantity;
                         $productParent->update();
                     }
-//                    $totalToCheck += $item->subtotal;
                 }
             }
+
             //saving Runout
             foreach ($runOutItems as $item) {
                 $item["factura_id"] = $factura->id;
                 RunOutSell::create($item);
             }
-            DB::commit();
+
+            DB::commit(); // COMMIT libera o bloqueio pessimista
             $request->session()->forget('items');
             $request->session()->forget('item');
             return redirect()->route('factura.show', $factura->id)->with(['sucesso' => __('messages.prompt.request_done')]);
         } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with(['falha' => __('messages.prompt.request_failure') . ' : ' . $e->getMessage(). $e]);
+            DB::rollback(); // ROLLBACK libera o bloqueio pessimista
+            // Em ambiente de produção, não retorne $e->getMessage() diretamente.
+            return redirect()->back()->with(['falha' => __('messages.prompt.request_failure') . ' : ' . $e->getMessage()]);
         }
     }
 
@@ -173,7 +223,8 @@ class FacturaController extends Controller {
      * @param  \App\Models\Factura  $factura
      * @return \Illuminate\Http\Response
      */
-    public function show(Factura $factura) {
+    public function show(Factura $factura)
+    {
         return view('factura.show', compact('factura'));
     }
 
@@ -183,7 +234,8 @@ class FacturaController extends Controller {
      * @param  \App\Models\Factura  $factura
      * @return \Illuminate\Http\Response
      */
-    public function edit(Factura $factura) {
+    public function edit(Factura $factura)
+    {
         return view('factura.edit', compact('factura'));
     }
 
@@ -194,7 +246,8 @@ class FacturaController extends Controller {
      * @param  \App\Models\Factura  $factura
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateFactura $request, Factura $factura) {
+    public function update(UpdateFactura $request, Factura $factura)
+    {
         $factura->day = $request->day;
         $factura->account_id = $request->account_id;
         $factura->factura = $request->factura;
@@ -209,7 +262,8 @@ class FacturaController extends Controller {
         }
     }
 
-    public function askDestroy(Request $request, $id) {
+    public function askDestroy(Request $request, $id)
+    {
         $factura = $this->factura->findOrfail($id);
 
         $factura->destroy_date = Carbon::now();
@@ -223,7 +277,8 @@ class FacturaController extends Controller {
         }
     }
 
-    public function cancelAskDestroy(Request $request, $id) {
+    public function cancelAskDestroy(Request $request, $id)
+    {
         $factura = $this->factura->findOrfail($id);
 
         $factura->destroy_date = null;
@@ -243,30 +298,38 @@ class FacturaController extends Controller {
      * @param  \App\Models\Factura  $factura
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Factura $factura) {
+    public function destroy(Factura $factura)
+    {
         DB::beginTransaction();
         try {
             $store = Store::first();
-            $delete = null;
-            $items = $factura->items;
 
             if ($store == null) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['info' => 'Seleccione o armazem.']);
             }
 
+            $items = $factura->items;
+
             foreach ($items as $item) {
                 $productParent = ProductChild::where('child', $item->product_id)->first();
-                $stock = Stock::where('product_id', ($productParent != null ? $productParent->parent : $item->product_id))->where('store_id', $store->id)->first();
-                $quantity = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
-                if($stock != null){
-                    $stock->quantity += $quantity;
-                    $stock->operation = "Remoção da Factura Nr: {$factura->id}";
-                    $stock->update();
+                $stockProductId = $productParent != null ? $productParent->parent : $item->product_id;
+                $quantityToIncrement = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
+
+                // Bloqueio Pessimista na remoção para garantir que o estoque não seja afetado
+                $stockQuery = Stock::where('product_id', $stockProductId)
+                    ->where('store_id', $store->id)
+                    ->lockForUpdate();
+
+                $stock = $stockQuery->first();
+
+                if ($stock != null) {
+                    // ATUALIZAÇÃO ATÔMICA: Usar increment() para devolver o estoque
+                    $stockQuery->increment('quantity', $quantityToIncrement, [
+                        'operation' => "Remoção da Factura Nr: {$factura->id}"
+                    ]);
                 }
 
-#$stock = Stock::where('product_id', $item->product_id)->where('store_id', $store->id)->first();
-//$stock->quantity += $item->quantity;
-                $factura->items()->save($item);
                 //Remove Quantity of saled product
                 if ($productParent != null) {
                     $productParent->sales -= $item->quantity;
@@ -279,47 +342,50 @@ class FacturaController extends Controller {
                 $payment = $factura->payments()->first();
                 if ($payment != null) {
                     $cashier = $payment->cashier;
-                    $cashier->present -= $factura->total;
-                    $cashier->update();
+                    // Assumindo que 'present' também deve ser decrementado atomicamente
+                    $cashier->decrement('present', $factura->total);
                     $payment->delete();
                 }
             }
 
-            $delete = $factura->delete();
+            $factura->delete();
             DB::commit();
             return redirect()->route('factura.index')->with(['info' => __('messages.prompt.request_done')]);
-        } catch (\Exceprion $e) {
+        } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with(['falha' => __('messages.prompt.request_failure') . ' : ' . $e->getMessage()]);
         }
     }
 
-    public function search(Request $request) {
+    public function search(Request $request)
+    {
         $dados = $request->all();
         $string = $request->criterio;
         $facturas = $this->factura->where('id', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('customer_id', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('customer_name', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('customer_phone', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('subtotal', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('totalrate', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('discount', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('total', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('day', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('payed', 'LIKE', '%' . $string . '%')
-                        ->latest()->paginate($this->limit);
+            ->OrWhere('customer_id', 'LIKE', '%' . $string . '%')
+            ->OrWhere('customer_name', 'LIKE', '%' . $string . '%')
+            ->OrWhere('customer_phone', 'LIKE', '%' . $string . '%')
+            ->OrWhere('subtotal', 'LIKE', '%' . $string . '%')
+            ->OrWhere('totalrate', 'LIKE', '%' . $string . '%')
+            ->OrWhere('discount', 'LIKE', '%' . $string . '%')
+            ->OrWhere('total', 'LIKE', '%' . $string . '%')
+            ->OrWhere('day', 'LIKE', '%' . $string . '%')
+            ->OrWhere('payed', 'LIKE', '%' . $string . '%')
+            ->latest()->paginate($this->limit);
         return view('factura.search', compact('dados', 'facturas'));
     }
 
-    public function cancel(Request $request) {
-        $items = auth()->user()->temp_items;
+    public function cancel(Request $request)
+    {
+        $items = $this->user->temp_items;
         foreach ($items as $item) {
             $item->delete();
         }
         return redirect()->route('factura.create')->with('info', __('messages.item.deleted'));
     }
 
-    public function copy(Request $request, $id) {
+    public function copy(Request $request, $id)
+    {
         $items = $this->factura->find($id)->items;
         foreach ($items as $item) {
             $product = Product::find($item->product_id);
@@ -333,15 +399,16 @@ class FacturaController extends Controller {
                     'rate' => $product->rate,
                     'subtotal' => $product->price * $item->quantity,
                 ];
-                if (auth()->user()->temp_items()->where('product_id', $item->product_id)->first() == null) {
-                    auth()->user()->temp_items()->create($data);
+                if ($this->user->temp_items()->where('product_id', $item->product_id)->first() == null) {
+                    $this->user->temp_items()->create($data);
                 }
             }
         }
         return redirect()->back()->with(['sucesso' => __('messages.item.copied')]);
     }
 
-    public function getDirect() {
+    public function getDirect()
+    {
         $store = Store::first();
         if ($store == null) {
             return redirect()->back()->withInput()->with('info', __('messages.sale.request_store'));
@@ -349,39 +416,68 @@ class FacturaController extends Controller {
         return view('factura.direct', compact('store'));
     }
 
-    public function postDirect(StoreFactura $request) {
+    public function postDirect(StoreFactura $request)
+    {
+        // Embora você tenha código similar, é melhor fatorar a lógica de estoque em um único lugar, 
+        // mas aqui mantemos a estrutura original e aplicamos as correções de concorrência.
         DB::beginTransaction();
         try {
-            $items = auth()->user()->temp_items;
+            $items = $this->user->temp_items;
             $store = Store::find($request->store_id);
+
+            if ($store == null) {
+                DB::rollBack();
+                return redirect()->back()->withInput()->with(['info' => __('messages.sale.request_store')]);
+            }
+
+            // --- FASE 1: VERIFICAÇÃO DE ESTOQUE COM BLOQUEIO PESSIMISTA ---
             foreach ($items as $item) {
                 if ($item->quantity > 0) {
                     $product = Product::find($item->product_id);
-                    if ($product->category->checkStock) {
-                        $productParent = ProductChild::where('child', $item->product_id)->first();
+                    if (!$product || !$product->category->checkStock) {
+                        continue;
+                    }
 
-                        $stock = Stock::where('product_id', ($productParent != null ? $productParent->parent : $item->product_id))->where('store_id', $store->id)->first();
-                        $resto = $stock != null ? $stock->quantity : 0;
-                        $quantity = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
-                        if ($stock == null || $quantity > $stock->quantity) {
-                            return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_stock') . " [$resto] na(o) {$store->name}."]);
-                        }
+                    $productParent = ProductChild::where('child', $item->product_id)->first();
+                    $stockProductId = $productParent != null ? $productParent->parent : $item->product_id;
+                    $quantityNeeded = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
+
+                    // BLOQUEIO PESSIMISTA: lockForUpdate()
+                    $stock = Stock::where('product_id', $stockProductId)
+                        ->where('store_id', $store->id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    $resto = $stock != null ? $stock->quantity : 0;
+
+                    if ($stock == null || $quantityNeeded > $stock->quantity) {
+                        DB::rollBack();
+                        return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_stock') . " [$resto] na(o) {$store->name}."]);
                     }
                 }
             }
 
+            // ... (Validações de cliente e total)
             if ($request->customer_name == null) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_name')]);
             }
             if ($request->total <= 0) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => __('messages.sale.request_items')]);
             }
-            $ans = array();
+
+            // --- FASE 2: CRIAÇÃO DA FATURA, PAGAMENTO E ATUALIZAÇÃO ATÔMICA DO ESTOQUE ---
+
             $factura = $this->factura->create($request->all());
-            $ans[] = $factura;
+
             if ($factura->payed) {
+                // Se a fatura já está marcada como paga (o que não deveria ser o caso se estamos a criar)
+                // Usar rollBack
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['info' => __('messages.payment.alread_payed')]);
             }
+
             foreach ($items as $item) {
                 $data = [
                     'product_id' => $item->product_id,
@@ -391,38 +487,41 @@ class FacturaController extends Controller {
                     'rate' => $item->rate,
                     'subtotal' => $item->subtotal,
                 ];
-                $productParent = ProductChild::where('child', $item->product_id)->first();
-# dd($productParent);
-                $stock = Stock::where('product_id', ($productParent != null ? $productParent->parent : $item->product_id))->where('store_id', $store->id)->first();
 
-                if ($stock == null) {
-                    return redirect()->back()->withInput()->with(['falha' => "O produto {$product->name} não tem stock. "]);
-                }
-//                    $stock = Stock::where('product_id', $item->product_id)->where('store_id', $request->store_id)->first();
-                $quantity = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
-                $stock->quantity -= $quantity;
-                $ans[] = $factura->items()->create($data);
-                $ans[] = $stock->update(); // 
+                $productParent = ProductChild::where('child', $item->product_id)->first();
+                $stockProductId = $productParent != null ? $productParent->parent : $item->product_id;
+                $quantityToDecrement = $productParent != null ? ($item->quantity * $productParent->quantity) : $item->quantity;
+
+                // ATUALIZAÇÃO ATÔMICA
+                $stockQuery = Stock::where('product_id', $stockProductId)->where('store_id', $store->id);
+                $stockQuery->decrement('quantity', $quantityToDecrement);
+
+                $factura->items()->create($data);
                 $item->delete();
+
                 //Add Quantity of saled product
                 if ($productParent != null) {
                     $productParent->sales += $item->quantity;
                     $productParent->update();
                 }
-//                    $totalToCheck += $item->subtotal;
             }
-            //Execute the payment
-            #Check if amount is equal to total
+
+            // Execute the payment
             if ($request->total > $request->amount) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => __('messages.sale.direct.amount')]);
             }
-//            $currencies = Currency::all();
-            $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today()->subDays(0))->where('endtime', null)->first();
-            $open = ($cashier != null) ? $cashier->count() : 0;
+
+            // Usando $this->user
+            $cashier = $this->user->cashier->where('startime', '>=', \Carbon\Carbon::today()->subDays(0))->where('endtime', null)->first();
+            $open = ($cashier != null) ? 1 : 0; // Contagem deve ser booleana ou 1
+
             if ($open == 0) {
+                DB::rollBack();
                 return redirect()->back()->withInput()->with(['falha' => "O Caixa não foi aberto! "]);
             }
-            //Creating a payment items
+
+            // Creating a payment items
             $paymentitem = new TempPaymentItem();
             $paymentitem->way = $request->way;
             $paymentitem->reference = $request->reference;
@@ -430,9 +529,9 @@ class FacturaController extends Controller {
             $paymentitem->exchanged = ($request->amount - $request->total);
             $paymentitem->currency_id = $request->currency_id;
             $paymentitem->currency = $request->currency_id == 0 ? 'MT' : Currency::find($request->currency_id ?? 0)->name;
-            auth()->user()->temp_payment_items()->save($paymentitem);
+            $this->user->temp_payment_items()->save($paymentitem);
 
-            //Resolvendo items
+            // Resolvendo items
             $data = [
                 'topay' => $request->total,
                 'payed' => $request->amount,
@@ -442,8 +541,10 @@ class FacturaController extends Controller {
             ];
             $factura->payed = true;
             $factura->save();
-            $paymentitems = auth()->user()->temp_payment_items;
+
+            $paymentitems = $this->user->temp_payment_items;
             $payment = $factura->payments()->create($data);
+
             foreach ($paymentitems as $paymentitem) {
                 $data2 = [
                     'way' => $request->way,
@@ -455,30 +556,57 @@ class FacturaController extends Controller {
                 $payment->items()->create($data2);
                 $paymentitem->delete();
             }
-            $cashier->present += $request->total;
-            $cashier->update();
+
+            // ATUALIZAÇÃO ATÔMICA do caixa
+            $cashier->increment('present', $request->total);
 
             DB::commit();
             $request->session()->forget('items');
             $request->session()->forget('item');
             return view('factura.show_after_payment', compact('payment'))->with(['sucesso' => __('messages.msg.store'), 'open' => $open]);
-        } catch (\Exceprion $e) {
+        } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with(['falha' => __('messages.prompt.request_failure') . ' : ' . $e->getMessage()]);
         }
     }
 
-    public function viewAskedDestroy() {
+    public function viewAskedDestroy()
+    {
         $facturas = $this->factura->where("destroy_username", "!=", null)->paginate($this->limit);
         $trashes = $this->factura->onlyTrashed()->where("destroy_username", "!=", null)->latest()->paginate($this->limit);
         return view('factura.asked_destroy', compact('facturas', 'trashes'));
     }
 
-    public function historyAskedDestroy(Request $request) {
+    public function historyAskedDestroy(Request $request)
+    {
         $date = $request->date;
-        #dd($date);
         $trashes = $this->factura->onlyTrashed()->where("destroy_username", "!=", null)->whereDate("deleted_at", $date)->latest()->paginate($this->limit);
         return view('home.historico_apagado_home', compact('trashes', 'date'));
     }
 
+    /**
+     * Returns Invoices for payments
+     * Filter by date:
+     */
+    public function invoicesForPayment($payed = false)
+    {
+        // dd($payed);
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $facturas = Factura::select('id', 'customer_name', 'total', 'created_at')
+            ->where(function ($query) use ($today, $tomorrow, $payed) {
+                $query->whereBetween('created_at', [$today, $tomorrow])
+                    ->when($payed == 'false', function($innerQuery){
+                        $innerQuery->orWhere('payed', false);
+                    })
+                    ->when($payed == 'true', function($innerQuery){
+                        $innerQuery->where('payed', true);
+                    });
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $flag = $payed =='true' ? '' : 'NÃO';
+        $facturasHeader = "Pesquisar facturas {$flag} pagas";
+        return view('factura.factura-for-payment', compact('facturas', 'facturasHeader', 'payed'));
+    }
 }

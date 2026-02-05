@@ -9,7 +9,7 @@ use App\Http\Requests\Account\UpdateQuotation;
 use App\Models\Store;
 use App\Models\Product;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Email\StoreSendEmail;
 use Mail;
 use App\Mail\SendQuotation;
@@ -51,7 +51,7 @@ class QuotationController extends Controller {
         if ($store == null) {
             return redirect()->back()->withInput()->with('info', 'Nao ha loja pra se fazer a venda.');
         }
-        return view('quotation.create', compact('accounts', 'store'));
+        return view('quotation.create', compact('store'));
     }
 
     /**

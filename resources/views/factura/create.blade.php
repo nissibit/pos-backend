@@ -12,8 +12,7 @@
             <div class="row">
                 <div class="col">
                     <h3><i class="fa fa-book-open"> </i> Nova VD</h3>
-                    <input type="hidden" name="store_id" id="store_id" value="{{ $store->id }}" />
-                    <input type="hidden" class="datepicker" name="day" id="day" value="{{ old('day',$factura->day ?? \Carbon\Carbon::today()->format('Y-m-d')) }}" readonly="readonly" />           
+                    <input type="text" name="day" id="day" value="{{ $today ?? 'N/A' }}" readonly="readonly" />           
                 </div>
                 <div class="col-sm-3 text-right">
                     <h2 id="QtdItems"></h2>

@@ -9,7 +9,7 @@
         <div class="card">
             <div class="card-header">
                 <h1 class="bg-primary text-center text-light" style="font-size: 50px;"><i class="fas fa-file text-uppercase"> Painel de Cotação  </i></h1>
-                @include('quotation.menuquotation')
+                @include('quotation.menuQuotation')
             </div>
             <div class="card-body">
                 @include('menu.alert')
