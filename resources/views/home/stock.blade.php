@@ -1,7 +1,8 @@
-<div class="col">
-    <table  class="table table-striped table-bordered table-hover table-sm table-responsive-sm">
+<div class="w3-card">
+    <x-simple-card message="Produtos com stock abaixo da média! "></x-simple-card>
+    <table class="w3-table-all w3-table-responsive w3-small w3-section">
         <thead>
-            <tr>
+            <tr class="w3-theme ">
                 <th>Cod. Barras</th>
                 <th>Produto</th>
                 <th>Qtd.</th>
@@ -11,17 +12,17 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($products as $product)        
-            <tr>
+            @forelse($products as $product)
+            <tr class="w3-hover-theme ">
                 <td><a href="{{ route('product.show', $product->id) }}"> {{ $product->barcode }} </a></td>
                 <td><a href="{{ route('product.show', $product->id) }}"> {{ $product->name }} </a></td>
                 <td><a href="{{ route('product.show', $product->id) }}"> {{ $product->stock->first()->quantity }} </a></td>
                 <td class="text-right"><a href="{{ route('product.show', $product->id) }}"> {{ number_format($product->price,2) }} </a></td>
                 <td><a href="{{ route('product.show', $product->id) }}"> {{ $product->category->name }} </a></td>
                 <td class="btn-group-sm text-center">
-                    {{ $product->run_out }} 
+                    {{ $product->run_out }}
                 </td>
-            </tr>         
+            </tr>
             @empty
             <tr>
                 <td colspan="6" class="text-center">
@@ -31,11 +32,11 @@
             @endforelse
         </tbody>
         <tfoot>
-            <tr>
+            <tr class="w3-center">
                 <td colspan="6" class="text-center">
                     {{ $products->links('vendor.pagination.w3css')  }}
                 </td>
             </tr>
         </tfoot>
-    </table> 
+    </table>
 </div>

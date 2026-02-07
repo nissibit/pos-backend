@@ -1,0 +1,24 @@
+@echo off
+REM ================================
+REM POS - Chrome Kiosk Printing
+REM ================================
+
+REM Fecha qualquer instância do Chrome
+taskkill /F /IM chrome.exe >nul 2>&1
+
+REM Aguarda 2 segundos
+timeout /t 2 >nul
+
+REM Caminho do Chrome (64 bits)
+set CHROME="C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+REM Se não existir, tenta 32 bits
+if not exist %CHROME% (
+    set CHROME="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+)
+
+REM URL da aplicação POS
+set URL=http://localhost/app
+
+REM Abre Chrome em modo Kiosk com impressão silenciosa
+%CHROME% --kiosk --kiosk-printing --disable-infobars --disable-session-crashed-bubble %URL%

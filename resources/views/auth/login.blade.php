@@ -1,73 +1,76 @@
-@extends('layouts.xicompra')
+@extends('layouts.guest')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header"><i class="fa fa-sign-in"></i> {{ __('Login') }}</div>
+< <style>
+    #password-content {
+    position: relative;
+    }
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
+    #show-password {
+    position: absolute;
+    top: 50%;
+    right: 4%;
+    cursor: pointer;
+    color: lightgray;
+    }
 
-                        <div class="form-group row">
-                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
+    #show-password:hover {
+    color: gray;
+    }
+    </style>
 
-                            <div class="col-md-6">
-                                <input id="email" type="text" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+    <div class="w3-container w3-card-4 w3-white w3-animate-zoom w3-padding-32 w3-round-large w3-leftbar w3-border-theme w3-rightbar" style="max-width: 500px; margin:50% auto;">
 
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+        <div class="w3-row w3-padding">
+            <h2>Faça login para ter acesso...</h2>
+            <hr />
+        </div>
+        <div class="w3-row">
 
-                        <div class="form-group row">
-                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+            <!-- Validation Errors -->
+            <x-auth-validation-errors class="mb-4" :errors="$errors" />
+        </div>
 
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <div class="col-md-6 offset-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-
-                                    <label class="form-check-label" for="remember">
-                                        {{ __('Remember Me') }}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-8 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Login') }}
-                                </button>
-
-                                @if (Route::has('password.request'))
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        {{ __('Forgot Your Password?') }}
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
+        <form method="POST" action="{{ route('login') }}" autocomplete="off">
+            @csrf
+            <div class="w3-row">
+                <div class="w3-col">
+                    <label><b>Utilizador</b> <x-icon-required /></label>
+                    <x-input name="email" id="email" onfocus="this.value=this.value;"
+                        value="{{ old('email', old('email'), '') }}" placeholder="Informe o Utilizador"></x-input>
+                </div>
+                <div class="w3-col">
+                    <div id="password-content">
+                        <label><b>Senha</b>  <x-icon-required /></label>
+                        <x-input type="password" name="password" id="password" class="w3-input w3-border"
+                            placeholder="Informe a Senha" name="password" required />
+                        <i id="show-password" class="fas fa-eye"></i>
+                    </div>
+                </div>
+                <div class="w3-col w3-section">
+                    <x-action-button class="w3-block">
+                        <span>entrar <i class="fas fa-sign-in"></i></span>
+                    </x-action-button>
+                </div>
+                <div class="w3-section">
+                    <div class="w3-hide">
+                        <input name="remember" id="remember" class="w3-check w3-margin-top" type="checkbox"
+                            checked="checked"> Lembrar
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
-</div>
-@endsection
+    @push('scripts')
+    <script>
+        const showPassword = document.querySelector("#show-password");
+        const inputPassword = document.querySelector("#password");
+        document.querySelector("#email").focus()
+        showPassword.addEventListener("click", function() {
+            this.classList.toggle("fa-eye-slash");
+            let currentType = inputPassword.type;
+            inputPassword.type = currentType == "password" ? "text" : "password";
+        });
+    </script>
+    @endpush
+    @endsection

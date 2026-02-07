@@ -12,7 +12,17 @@ use App\Models\Currency;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Account;
+use App\Models\Base;
+use App\Models\Cashier;
+use App\Models\Company;
+use App\View\Components\Alert;
 use Illuminate\Support\Facades\Auth as Auth;
+use Illuminate\Support\Facades\Blade;
+use Symfony\Component\Translation\Exception\NotFoundResourceException;
+use Throwable;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
+
+use function Symfony\Component\Clock\now;
 
 class PaymentController extends Controller
 {
@@ -311,5 +321,83 @@ class PaymentController extends Controller
         $open = ($cashier != null) ? $cashier->count() : 0;
 
         return view('payment.search_credit', compact('dados', 'payments', 'cashier', 'open'));
+    }
+
+    public function createPayment(string $id)
+    {
+        try {
+            // dd($id);
+            $factura = null;
+            $factura = Factura::findOrFail($id);
+
+            $cashier = Auth::user()->cashier->where('startime', '>=', Carbon::today())->where('endtime', null)->first();
+            $methods = Base::meioPagamento();
+            return view('payment.create-payment', compact('factura', 'cashier', 'methods'));
+        } catch (NotFoundResourceException $th) {
+            return response(Blade::renderComponent(new Alert("falha", "Factura não encontrada")), 404);
+        } catch (\Throwable $th) {
+            return response(Blade::renderComponent(new Alert("falha", "Ocorreu um erro ao carregar formulário de pagamentos: {$th->getMessage()} na linha {$th->getLine()}")), 400);
+        }
+    }
+
+    public function savePayment(Request $request)
+    {
+        // dd($request->all());
+        // $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+        $cashier = Cashier::orderBy('id', 'desc')->first();
+        try {
+            $data = [
+                'topay' => $request->payment_dueAmount,
+                'payed' => $request->payment_received,
+                'change' => $request->payment_changes,
+                'day' => today(),
+                'cashier_id' => $cashier->id
+            ];
+
+            $factura = Factura::with('payments')->findOrfail($request->facturaId);
+            if ($factura->payed) {
+                $payment = $factura->payments()->orderBy('id', 'desc')->first();
+                return view('payment.preview', compact('payment'));
+            }
+            $payment = $factura->payments()->create($data);
+            // foreach ($paymentitems as $paymentitem) {
+            //     $data2 = [
+            //         'way' => $paymentitem->way,
+            //         'reference' => $paymentitem->reference,
+            //         'amount' => $paymentitem->amount,
+            //         'exchanged' => $paymentitem->exchanged,
+            //         'currency_id' => $paymentitem->currency_id,
+            //     ];
+            //     $payment->items()->create($data2);
+            //     $paymentitem->delete();
+            // }
+            $factura->payed = true;
+            $factura->save();
+            $cashier->present += $request->payment_dueAmount;
+            $cashier->update();
+
+            DB::commit();
+            $company = Company::first();
+            $custompaper = array(0, 0, 842.00 * 2, 283.80);
+            $pdf = PDF::loadView("report.factura.one", compact('factura', 'company', 'payment'))->setPaper($custompaper, 'landscape');
+            $output = $pdf->output();
+            return view('payment.preview', compact('payment'));
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response(Blade::renderComponent(new Alert("falha", "Erro ao salvar pagamento: {$th->getMessage()} na lina {$th->getLine()}.")), 400);
+        }
+    }
+
+    public function previewPayment(string $id)
+    {
+        try {
+            $payment = Factura::with('payments')->findOrfail($id)->payments()->orderBy('id', 'desc')->first();
+            return view('payment.preview', compact('payment'));
+        } catch (NotFoundResourceException $th) {
+            return response(Blade::renderComponent(new Alert("falha", "Pagamento não encontrado!")), 40);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response(Blade::renderComponent(new Alert("falha", "Erro ao salvar pagamento: {$th->getMessage()} na lina {$th->getLine()}.")), 400);
+        }
     }
 }

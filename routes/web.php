@@ -13,78 +13,50 @@
 
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PaymentController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Auth::routes(['register' => false]);
 
-Route::get("/get-product", "ProductController@getProduct")->name("product.get.product");
-Route::get("/get-last-added", "ProductController@lastProductAdded")->name("product.get.last.added");
-Route::get("/item/add", "ProductController@Additems")->name("product.item.add");
-Route::get("/product/add/{id}", "ProductController@addProduct")->name("product.add");
-Route::get("/product/{id}/specific-statistic/{date}", "ProductController@getSpecificStatistic")->name("product.specific.statistic");
-Route::get("/product/{id}/resume-statistic/{from}/{to}", "ProductController@getStatisticResume")->name("product.resume.statistic");
-Route::get("/product/form/editable", "ProductController@formEditable")->name("product.form.editable");
-Route::get("/product/form/editable/add", "ProductController@postFormEditable")->name("product.form.editable.post");
-
-Route::get('/send/email', function () {
-    $credit = App\Models\Credit::first();
-    $op = Mail::to(auth()->user())->send(new \App\Mail\SendMailTest($credit));
-    echo $op;
-});
-
-Route::get('/update_products', 'ProductController@updateProducts');
-
-Route::get('locale/{locale}', function ($locale) {
-    Session::put('locale', $locale);
-    return redirect()->back();
-})->name('locale');
-
-Route::get('/cancel-artigos', function () {
-    $items = auth()->user()->temp_items;
-    foreach ($items as $item) {
-        $item->delete();
-    }
-    \Request::session()->forget('item');
-
-    return redirect()->back()->with(['info' => __('messages.item.deleted')]);
-})->name('cancel.items');
-
-Route::get('/cancel-entries', function () {
-    $items = auth()->user()->temp_entries;
-    foreach ($items as $item) {
-        $item->delete();
-    }
-    return redirect()->back()->with(['info' => __('messages.item.deleted')]);
-})->name('cancel.entries');
 
 
-Route::get('/about', function () {
-    return view('about.index');
-})->name('about');
+Route::get('/cancel-artigos', "HomeController@cancelItems")->name('cancel.items');
+Route::get('/cancel-entries', "HomeController@cancelEntries")->name('cancel.entries');
+
+Route::get('/',  [HomeController::class, 'index']);
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/permission/restore/{id}', 'PermissionController@restore');
 Route::get('/permission/restore/all', 'PermissionController@restoreAll');
 Route::get('/permission/set', 'PermissionController@setPermission')->name('permission-set');
+
+#Product
 Route::get('/product/list/autocomplete/{term?}', 'ProductController@getProductAutoComplete')->name('product.autocomplete');
 Route::get('/product/list/autocomplete-all/{term?}', 'ProductController@getProductAutoCompleteAll')->name('product.autocomplete.all');
 Route::get('/product/mother', 'ProductController@mother')->name('product.mother');
 Route::get('/product/exchange/{id}', 'ProductController@exchangeGet')->name('product.exchange');
 Route::post('/product/exchange/save', 'ProductController@exchangePost')->name('product.exchange.post');
-
-Route::post('/product/child/save', 'ProductController@storeChild')->name('product.child.save');
+Route::get("/product/add/{id}", "ProductController@addProduct")->name("product.add");
+Route::get("/product/{id}/specific-statistic/{date}", "ProductController@getSpecificStatistic")->name("product.specific.statistic");
+Route::get("/product/{id}/resume-statistic/{from}/{to}", "ProductController@getStatisticResume")->name("product.resume.statistic");
+Route::get("/product/form/editable", "ProductController@formEditable")->name("product.form.editable");
+Route::get("/product/form/editable/add", "ProductController@postFormEditable")->name("product.form.editable.post");
 Route::get('/product/child/destroy/{id}', 'ProductController@destroyChild')->name('product.child.destroy');
-Route::post('/product/child/restore', 'ProductController@restoreChild')->name('product.child.restore');
 Route::get('/product/parent/destroy/{id}', 'ProductController@destroyChild')->name('product.parent.destroy');
+Route::post('/product/child/restore', 'ProductController@restoreChild')->name('product.child.restore');
+Route::post('/product/child/save', 'ProductController@storeChild')->name('product.child.save');
+Route::get("/get-product", "ProductController@getProduct")->name("product.get.product");
+Route::get('/update_products', 'ProductController@updateProducts');
+Route::get("/get-last-added", "ProductController@lastProductAdded")->name("product.get.last.added");
+Route::get("/item/add", "ProductController@Additems")->name("product.item.add");
+
 
 Route::post('/mother/child/save', 'MotherController@storeChild')->name('mother.child.save');
 Route::get('/mother/child/destroy/{id}', 'MotherController@destroyChild')->name('mother.child.destroy');
 Route::post('/mother/child/restore', 'MotherController@restoreChild')->name('mother.child.restore');
 
 Route::get('/customer/list/autocomplete/{term?}', 'CustomerController@getCustomerAutoComplete')->name('customer.autocomplete');
-Route::get('/', function () {
-    return redirect()->route('login');
-});
 
 Route::get('/role/set', 'RoleController@setRole')->name('role.set');
 Route::get('/role/set/list', 'RoleController@listSetRole')->name('role.listset');
@@ -115,12 +87,8 @@ Route::post('/partner/search', 'PartnerController@search')->name('partner.search
 Route::post('/conversao/search', 'ConversaoController@search')->name('conversao.search');
 Route::post('/server/search', 'ServerController@search')->name('server.search');
 Route::get('/account/search', 'AccountController@search')->name('account.search');
-Route::get('/account/by-customer', function () {
-    return view('account.search_by_customer');
-})->name('account.search.byCustomer');
-Route::get('/account/by-supplier', function () {
-    return view('account.search_by_supplier');
-})->name('account.search.bySupplier');
+Route::view('/account/by-customer', 'account.search_by_customer')->name('account.search.byCustomer');
+Route::view('/account/by-supplier', view('account.search_by_supplier'))->name('account.search.bySupplier');
 Route::get('/credit/search', 'CreditController@search')->name('credit.search');
 Route::get('/credit/by-account/{id}', 'CreditController@byAccount')->name('credit.by_account');
 Route::get('/credit/search/by-account/{id}', 'CreditController@searchByAccount')->name('credit.search.by_account');
@@ -142,22 +110,29 @@ Route::prefix('/factura')->group(function () {
     Route::post('/cancel/ask/destroy/{id}', 'FacturaController@cancelAskDestroy')->name('factura.cancel.ask.destroy');
     Route::get('/view/asked-destroy', 'FacturaController@viewAskedDestroy')->name('factura.view.ask.destroy');
 });
+
+Route::prefix('/payment')->group(function () {
+    Route::get('print', 'Report\FacturaReport@facturaJasper')->name('payment.print');
+    Route::get('print/{id}', 'Report\FacturaReport@factura')->name('payment.print_simple');
+    Route::get('search', 'PaymentController@search')->name('payment.search');
+    Route::get('credit/search', 'PaymentController@creditSearch')->name('payment.credit.search');
+    Route::get('cancel', 'PaymentController@cancel')->name('payment.cancel');
+    Route::get('/createPayment/{id}', [PaymentController::class, 'createPayment'])->name('payment.create.direct');
+    Route::post('/save', [PaymentController::class, 'savePayment'])->name('payment.save');
+    Route::post('/preview/{id}', [PaymentController::class, 'previewPayment'])->name('payment.preview');
+});
+Route::get('paymenttem/search', 'PaymentItemController@search')->name('paymentitem.search');
+
 Route::get('/loan/search', 'LoanController@search')->name('loan.search');
 Route::get('/devolution/search', 'DevolutionController@search')->name('devolution.search');
-Route::get('/payment/print', 'Report\FacturaReport@facturaJasper')->name('payment.print');
-Route::get('/payment/print/{id}', 'Report\FacturaReport@factura')->name('payment.print_simple');
 Route::get('/quotation/search', 'QuotationController@search')->name('quotation.search');
 Route::get('/quotation/cancel', 'QuotationController@cancel')->name('quotation.cancel');
 Route::get('/cashier/search', 'CashierController@search')->name('cashier.search');
 Route::get('/cashier/search/report', 'CashierController@searchReport')->name('cashier.search.report');
 Route::get('/fund/search/report', 'FundController@searchReport')->name('fund.search.report');
-Route::get('/payment/search', 'PaymentController@search')->name('payment.search');
-Route::get('/payment/credit/search', 'PaymentController@creditSearch')->name('payment.credit.search');
 Route::get('/fund/search', 'FundController@search')->name('fund.search');
 Route::get('/creditnote/search', 'CreditNoteController@search')->name('creditnote.search');
-Route::get('/payment/cancel', 'PaymentController@cancel')->name('payment.cancel');
 Route::get('/exchange/search', 'ExchangeController@search')->name('exchange.search');
-Route::get('/paymentitem/search', 'PaymentItemController@search')->name('paymentitem.search');
 Route::get('/currency/search', 'CurrencyController@search')->name('currency.search');
 Route::get('/cashflow/search', 'CashFlowController@search')->name('cashflow.search');
 Route::get('/output/search', 'OutputController@search')->name('output.search');
@@ -194,6 +169,7 @@ Route::get('/report/factura/pedido/{id}', 'Report\FacturaReport@pedido')->name('
 Route::get('/report/quotation/{id}', 'Report\QuotationReport@quotation')->name('report.quotation');
 Route::get('/report/quotation/modelo-02/{id}', 'Report\QuotationReport@quotation_2')->name('report.quotation.modelo2');
 Route::get('/report/cashier/products/{id}/{m}', 'Report\CashierReport@products')->name('report.cashier.products');
+
 Route::get('cashier/{id}/payments', 'CashierController@fetch_payments')->name('cashier.payments');
 Route::get('cashier/{id}/payment-credits', 'CashierController@fetch_payment_credits')->name('cashier.payment.credits');
 Route::get('cashier/{id}/totals', 'CashierController@fetch_totals')->name('cashier.totals');

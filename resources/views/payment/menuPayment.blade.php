@@ -6,8 +6,8 @@
                 @lang('messages.entity.factura')
             </x-button>
             <div class="w3-dropdown-content w3-bar-block w3-border">
-                <a href="#" onclick="loadingInvoiceForPayment(false)" class="w3-bar-item w3-button"><i class="fas fa-search"></i> Não pagas</a>
-                <a href="#" onclick="loadingInvoiceForPayment(true)" class="w3-bar-item w3-button"><i class="fas fa-list"></i> Pagas</a>
+                <a href="#" onclick="loadingInvoiceForPayment(false)" class="w3-bar-item w3-button"><i class="fas fa-list"></i> Não pagas</a>
+                <a href="#" onclick="loadingInvoiceForPayment(true)" class="w3-bar-item w3-button"><i class="fas fa-check"></i> Pagas</a>
             </div>
         </div>
         <div class="w3-dropdown-hover">

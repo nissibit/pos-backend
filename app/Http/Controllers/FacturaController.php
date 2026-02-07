@@ -595,8 +595,8 @@ class FacturaController extends Controller
         $tomorrow = Carbon::tomorrow();
         $facturas = Factura::select('id', 'customer_name', 'total', 'created_at')
             ->where(function ($query) use ($today, $tomorrow, $payed) {
-                $query->whereBetween('created_at', [$today, $tomorrow])
-                    ->when($payed == 'false', function($innerQuery){
+                // $query->whereBetween('created_at', [$today, $tomorrow])
+                    $query->when($payed == 'false', function($innerQuery){
                         $innerQuery->orWhere('payed', false);
                     })
                     ->when($payed == 'true', function($innerQuery){
@@ -604,6 +604,7 @@ class FacturaController extends Controller
                     });
             })
             ->orderBy('created_at', 'desc')
+            ->take(100)
             ->get();
         $flag = $payed =='true' ? '' : 'NÃO';
         $facturasHeader = "Pesquisar facturas {$flag} pagas";

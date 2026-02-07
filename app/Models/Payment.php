@@ -18,7 +18,8 @@ class Payment extends Model implements Auditable {
         'payed',
         'change',
         'day',
-        'cashier_id'
+        'cashier_id',
+        'nr'
     ];
     protected $dates = [
         'day'

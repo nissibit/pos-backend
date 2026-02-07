@@ -70,7 +70,7 @@
                 icon = "info-circle";
                 break;
         }
-        return `<div class='w3-center w3-panel w3-round w3-border w3-card-2 w3-section w3-padding w3-border-${color}'><i class='fas fa-${icon} w3-text-${color}' ></i> ${message}</div>`
+        return `<div class='w3-grid w3-round-large w3-border w3-card-2 w3-section w3-padding w3-border-${color} w3-rightbar' style="grid-template-columns:50px auto; font-size:1.2rem"><div><i class='fas fa-${icon} fa-2x w3-text-${color}' ></i></div><div>${message}</div></div>`
     }
 
     function openTab(evt, tabName) {

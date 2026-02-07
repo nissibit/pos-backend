@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Session;
 
-class HomeController extends Controller {
+class HomeController extends Controller
+{
     private User $user;
     private $limit = 10;
     /**
@@ -15,7 +16,8 @@ class HomeController extends Controller {
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->middleware(['auth']);
     }
 
@@ -24,18 +26,19 @@ class HomeController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-   public function index() {     
+    public function index()
+    {
         $this->user = Auth::user();
         if ($this->user->hasAnyRoles("Administrador")) {
-            $products= \App\Models\Product::doesntHave('parents')->whereHas('stocks', function($query){
-                $query->where("stocks.quantity", "<=", 'run_out');                
+            $products = \App\Models\Product::doesntHave('parents')->whereHas('stocks', function ($query) {
+                $query->where("stocks.quantity", "<=", 'run_out');
             })->latest()->paginate($this->limit);
             #dd($products);
-             return view('home', compact("products"));        
-       }
-       return view('home');
-   }
-//    
+            return view('home', compact("products"));
+        }
+        return view('home');
+    }
+    //    
     // public function index() {
 
     //     $wcppScript = WebClientPrint::createWcppDetectionScript(action('WebClientPrintController@processRequest'), Session::getId());
@@ -46,5 +49,30 @@ class HomeController extends Controller {
     // public function printHtmlCard() {
     //     return view('home.printHtmlCard');
     // }
+    public function cancelItems()
+    {
+        try {
+            $items = Auth::user()->temp_items;
+            foreach ($items as $item) {
+                $item->delete();
+            }
+            Request::session()->forget('item');
+            return redirect()->back()->with(['info' => __('messages.item.deleted')]);
+        } catch (\Throwable $th) {
+            dd($th->getMessage());
+        }
+    }
 
+    public function cancelEntries()
+    {
+        try {
+            $items = Auth::user()->temp_entries;
+            foreach ($items as $item) {
+                $item->delete();
+            }
+            return redirect()->back()->with(['info' => __('messages.item.deleted')]);
+        } catch (\Throwable $th) {
+            dd($th->getMessage());
+        }
+    }
 }

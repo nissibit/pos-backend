@@ -33,7 +33,7 @@
                     <label for="way" class="control-label">@lang('messages.payment.way') <b class="text-danger">*</b></label>
                     <select class="form-control @error('way') is-invalid @enderror" name="way" id="way">
                         <option value=""> ----- Selecciona ----- </option>
-                        @foreach(\App\Base::meioPagamento() ?? array() as $way)
+                        @foreach(\App\Models\Base::meioPagamento() ?? array() as $way)
                         <option value="{{ $way }}" {{ old('way',  $payment->way ?? 'Cash') == $way ? 'selected' : '' }}>  {{ $way }}</option>                    
                         @endforeach
                     </select>
