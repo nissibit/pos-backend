@@ -22,8 +22,7 @@ class StoreCashier extends FormRequest {
      */
     public function rules() {
         return [
-            'user_id' => 'required|exists:users,id',
-            'startime' => 'required|date',
+            'startime' => 'nullable|date',
             'endtime' => 'nullable|date',
             'initial' => 'required|numeric',
             'informed' => 'nullable|numeric',

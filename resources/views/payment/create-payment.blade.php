@@ -60,28 +60,5 @@
 
     </div>
 
-    <x-modal>
-        <x-slot:title>
-            <div class="w3-flex" style="align-items: center; gap: 4px;">
-                <div><i class="fas fa-save"></i></div>
-                <div>
-                    <h3>Pagamento da factura</h3>
-                </div>
-            </div>
-        </x-slot:title>
-        <x-slot:footer>
-            <div class="w3-section w3-grid" style="grid-template-columns: 1fr 1fr;">
-                <div>
-                    <x-button onclick="toggleModal('modal', false); " class="w3-red w3-left">
-                        <i class="fas fa-times"></i> fechar
-                    </x-button>
-                </div>
-                <div>
-                    <x-action-button type="button" onclick="printPDF()" id="btnPrintPDF" class="w3-block">
-                        <i class="fas fa-print"></i> imprimir recibo
-                    </x-action-button>
-                </div>
-            </div>
-        </x-slot:footer>
-    </x-modal>
+   
 </div>

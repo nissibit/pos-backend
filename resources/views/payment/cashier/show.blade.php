@@ -1,5 +1,4 @@
-@extends("payment.cashier.indexCashier")
-@section("content-cashier")
+
 <?php
 $tab = request()->get('tab');
 $selectedTab = $tab != null ? $tab : 0;
@@ -68,4 +67,3 @@ $selectedTab = $tab != null ? $tab : 0;
         }).catch(error => console.log(error));
     }
 </script>
-@endsection

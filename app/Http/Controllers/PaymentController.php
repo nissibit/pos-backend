@@ -34,8 +34,7 @@ class PaymentController extends Controller
      */
     private $payment;
     private $limit = 10;
-    private $open = null;
-
+    private $open = null;            
     function __construct(Payment $payment)
     {
         $this->payment = $payment;
@@ -326,10 +325,8 @@ class PaymentController extends Controller
     public function createPayment(string $id)
     {
         try {
-            // dd($id);
             $factura = null;
             $factura = Factura::findOrFail($id);
-
             $cashier = Auth::user()->cashier->where('startime', '>=', Carbon::today())->where('endtime', null)->first();
             $methods = Base::meioPagamento();
             return view('payment.create-payment', compact('factura', 'cashier', 'methods'));

@@ -119,10 +119,10 @@ Route::prefix('/payment')->group(function () {
     Route::get('cancel', 'PaymentController@cancel')->name('payment.cancel');
     Route::get('/createPayment/{id}', [PaymentController::class, 'createPayment'])->name('payment.create.direct');
     Route::post('/save', [PaymentController::class, 'savePayment'])->name('payment.save');
-    Route::post('/preview/{id}', [PaymentController::class, 'previewPayment'])->name('payment.preview');
+    Route::get('/preview/{id}', [PaymentController::class, 'previewPayment'])->name('payment.preview');
 });
-Route::get('paymenttem/search', 'PaymentItemController@search')->name('paymentitem.search');
 
+Route::get('paymenttem/search', 'PaymentItemController@search')->name('paymentitem.search');
 Route::get('/loan/search', 'LoanController@search')->name('loan.search');
 Route::get('/devolution/search', 'DevolutionController@search')->name('devolution.search');
 Route::get('/quotation/search', 'QuotationController@search')->name('quotation.search');

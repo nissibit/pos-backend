@@ -6,10 +6,14 @@ use App\Models\{Cashier, Credit, Payment, PaymentItem, Item};
 use Illuminate\Http\Request;
 use App\Http\Requests\Sell\StoreCashier;
 use App\Http\Requests\Sell\UpdateCashier;
+use App\View\Components\Alert;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 
-class CashierController extends Controller {
+class CashierController extends Controller
+{
 
     /**
      * Display a listing of the resource.
@@ -20,16 +24,18 @@ class CashierController extends Controller {
     private $limit = 10;
     private $open = null;
 
-    function __construct(Cashier $cashier) {
+    function __construct(Cashier $cashier)
+    {
         $this->cashier = $cashier;
         $this->middleware(['auth', 'revalidate']);
     }
 
-    public function index() {
-//        $cashiers = $this->cashier->orderBy('name')->latest()->take($this->limit)->get();
-        $cashiers = $this->cashier->latest()->paginate($this->limit);
-//        $cashiers = $this->cashier->whereDate('startime', Carbon::today())->paginate($this->limit);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+    public function index()
+    {
+        //        $cashiers = $this->cashier->orderBy('name')->latest()->take($this->limit)->get();
+        $cashiers = $this->cashier->orderBy('id', 'desc')->take($this->limit)->get();
+        //        $cashiers = $this->cashier->whereDate('startime', Carbon::today())->paginate($this->limit);
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.cashier.index', compact('cashiers', 'open'));
     }
@@ -39,10 +45,9 @@ class CashierController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function create() {
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
-        $open = ($cashier != null) ? $cashier->count() : 0;
-        return view('payment.cashier.create', compact('open'));
+    public function create()
+    {
+        return view('payment.cashier.create');
     }
 
     /**
@@ -51,21 +56,26 @@ class CashierController extends Controller {
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreCashier $request) {
-        $data = $request->all();
-        $data['present'] = $request->initial;
-//        dd($data);
-        if($cashier = $this->cashier->whereDate('startime',  \Carbon\Carbon::today()->format('Y-m-d'))->count()>0){
-            return redirect()->back()->with('info','Já tem um caixa aberto');
+    public function store(StoreCashier $request)
+    {
+        try {
+            // dd($request->all());
+            $data =  [
+                'startime' => now(),
+                'initial' => $request->initial,
+                'present' => $request->initial,
+            ];
 
-        }
-        $insert = $this->cashier->create($data);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
-        $open = ($cashier != null) ? $cashier->count() : 0;
-        if ($insert) {
-            return redirect()->route('payment.index', $insert->id)->with(['sucesso' => __('messages.msg.store'), 'open' => $open, 'cashier' => $cashier]);
-        } else {
-            return redirect()->back()->with(['falha' => __('messages.prompt.request_failure'), 'open' => $open, 'cashier' => $cashier]);
+            if ($cashier = $this->cashier->whereDate('startime',  today()->format('Y-m-d'))->count() > 0) {
+                return response(Blade::renderComponent(new Alert("falha", "Já tem um caixa aberto.")), 400);
+            }
+            $insert = Auth::user()->cashier()->create($data);
+            if ($insert) {
+                return response(Blade::renderComponent(new Alert("sucesso", "Caixa aberto com sucesso.")), 400);
+            }
+        } catch (\Throwable $th) {
+
+            return response(Blade::renderComponent(new Alert("falha", "Ocorreu um erro ao abrir caixa: {$th->getMessage()} na linha {$th->getLine()}")), 400);
         }
     }
 
@@ -75,43 +85,42 @@ class CashierController extends Controller {
      * @param  \App\Models\Cashier  $cashier
      * @return \Illuminate\Http\Response
      */
-    public function show(Cashier $cashier) {        
+    public function show(Cashier $cashier)
+    {
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.cashier.show', compact('cashier', 'open', 'cashier'));
     }
 
     public function fetch_payments(Request $request, $id)
     {
-        try{
-            $payments = Payment::where('cashier_id',$request->id)->get();
+        try {
+            $payments = Payment::where('cashier_id', $request->id)->get();
             return view('payment.cashier.sales_table', compact('payments'));
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return "Occorreu um erro ao carregar os pagamentos do caixa!";
-        }       
-        
+        }
     }
 
 
     public function fetch_payment_credits(Request $request, $id)
     {
-        try{
-            $credits = Payment::where('cashier_id',$request->id)->whereHasMorph('payment', [Credit::class])->get();
+        try {
+            $credits = Payment::where('cashier_id', $request->id)->whereHasMorph('payment', [Credit::class])->get();
             return view('payment.cashier.sales_table_credit', compact('credits'));
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return "Occorreu um erro ao carregar os pagamentos do caixa!";
-        }       
-        
+        }
     }
 
 
     public function fetch_totals(Request $request, $id)
     {
-        try{
-             $totals = PaymentItem::select(\DB::raw("payment_items.way, SUM(payments.topay) as present"))
-                ->join('payments', function($join){
+        try {
+            $totals = PaymentItem::select(\DB::raw("payment_items.way, SUM(payments.topay) as present"))
+                ->join('payments', function ($join) {
                     $join->on('payment_items.payment_id', 'payments.id');
                 })
-                ->join('cashiers', function($join){
+                ->join('cashiers', function ($join) {
                     $join->on('payments.cashier_id', 'cashiers.id');
                 })
                 ->whereNull('payments.deleted_at')
@@ -119,31 +128,29 @@ class CashierController extends Controller {
                 ->groupBy('payment_items.way')
                 ->get();
             return view('payment.cashier.totals_table', compact('totals'));
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return "Occorreu um erro ao carregar os totais do caixa! {$ex->getMessage()}";
-        }       
-        
+        }
     }
 
     public function fetch_products(Request $request, $id)
     {
-        try{
+        try {
             $cashier = Cashier::findOrfail($id);
 
-             $products = Item::select(\DB::RAW(" 
+            $products = Item::select(\DB::RAW(" 
                                 product_id, barcode, name, unitprice as price,
                                 SUM(`quantity`) AS `qtd`,
                                 SUM(`subtotal`) AS `total`
                                 "))
-                                ->whereDate('created_at', $cashier->startime->format("Y-m-d"))
-                                ->groupBy("product_id","barcode", "name", "price")
-                                ->orderBy("name")
-                                ->get();
+                ->whereDate('created_at', $cashier->startime->format("Y-m-d"))
+                ->groupBy("product_id", "barcode", "name", "price")
+                ->orderBy("name")
+                ->get();
             return view('payment.cashier.products_table', compact('products', 'cashier'));
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return "Occorreu um erro ao carregar os produtos vendidos do caixa! {$ex->getMessage()}";
-        }       
-        
+        }
     }
     /**
      * Show the form for editing the specified resource.
@@ -151,7 +158,8 @@ class CashierController extends Controller {
      * @param  \App\Models\Cashier  $cashier
      * @return \Illuminate\Http\Response
      */
-    public function edit(Cashier $cashier) {
+    public function edit(Cashier $cashier)
+    {
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.cashier.edit', compact('open', 'cashier'));
     }
@@ -163,7 +171,8 @@ class CashierController extends Controller {
      * @param  \App\Models\Cashier  $cashier
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateCashier $request, Cashier $cashier) {
+    public function update(UpdateCashier $request, Cashier $cashier)
+    {
         $open = ($cashier != null) ? $cashier->count() : 0;
         try {
             if ($cashier->endtime != null) {
@@ -181,8 +190,8 @@ class CashierController extends Controller {
             foreach ($meios as $meio) {
                 $meios2[] = preg_replace('/\s+/', '_', $meio);
             }
-//            dd($data);
-            \DB::transaction(function () use(&$update, &$cashier, $meios2, $data, &$update2) {
+            //            dd($data);
+            \DB::transaction(function () use (&$update, &$cashier, $meios2, $data, &$update2) {
                 $update = $cashier->update();
                 foreach ($data as $key => $value) {
                     if (in_array($key, $meios2)) {
@@ -192,7 +201,7 @@ class CashierController extends Controller {
             });
             if ($update && (!in_array(false, $update2))) {
                 return redirect()->route('cashier.print', ['id' => $cashier->id])->with(['sucesso' => __('messages.msg.update'), 'open' => $open]);
-//                return view('payment.cashier.print', compact('cashier'));
+                //                return view('payment.cashier.print', compact('cashier'));
             } else {
                 return redirect()->back()->with(['falha' => __('messages.prompt.request_failure'), 'open' => $open, 'cashier' => $cashier]);
             }
@@ -207,7 +216,8 @@ class CashierController extends Controller {
      * @param  \App\Models\Cashier  $cashier
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Cashier $cashier) {
+    public function destroy(Cashier $cashier)
+    {
         DB::beginTransaction();
         try {
             $totals = $cashier->totals();
@@ -224,51 +234,53 @@ class CashierController extends Controller {
             return redirect()->route('cashier.index')->with(['info' => __('messages.msg.delete')]);
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->route('cashier.index')->with(['falha' => __('messages.prompt.request_failure')."; {$e->getMessage()}",  'cashier' => $cashier]);
+            return redirect()->route('cashier.index')->with(['falha' => __('messages.prompt.request_failure') . "; {$e->getMessage()}",  'cashier' => $cashier]);
         }
     }
 
-    public function search(Request $request) {
+    public function search(Request $request)
+    {
         $dados = $request->all();
         $string = $request->criterio;
         $cashiers = $this->cashier->where('id', 'LIKE', '%' . $string . '%')
-                ->OrWhere('startime', 'LIKE', '%' . $string . '%')
-                ->orWhere('endtime', 'LIKE', '%' . $string . '%')
-                ->orWhere('initial', 'LIKE', '%' . $string . '%')
-                ->orWhere('missing', 'LIKE', '%' . $string . '%')
-                ->orWhere('description', 'LIKE', '%' . $string . '%')
-                ->orWhereHas('user', function($query) use ($string) {
-                    $query->Where('name', 'LIKE', '%' . $string . '%')
+            ->OrWhere('startime', 'LIKE', '%' . $string . '%')
+            ->orWhere('endtime', 'LIKE', '%' . $string . '%')
+            ->orWhere('initial', 'LIKE', '%' . $string . '%')
+            ->orWhere('missing', 'LIKE', '%' . $string . '%')
+            ->orWhere('description', 'LIKE', '%' . $string . '%')
+            ->orWhereHas('user', function ($query) use ($string) {
+                $query->Where('name', 'LIKE', '%' . $string . '%')
                     ->orWhere('username', 'LIKE', '%' . $string . '%')
                     ->orWhere('email', 'LIKE', '%' . $string . '%');
-                })
-                ->latest()
-                ->paginate($this->limit);
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today()->format('Y-d-m'))->where('endtime', null)->first();
+            })
+            ->latest()
+            ->paginate($this->limit);
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today()->format('Y-d-m'))->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.cashier.search', compact('dados', 'cashiers', 'open', 'cashier'));
     }
 
-    public function print(Request $request) {
+    public function print(Request $request)
+    {
         $cashier = $this->cashier->find($request->id);
         $open = ($cashier != null) ? $cashier->count() : 0;
         return view('payment.cashier.print', compact('cashier', 'open', 'cashier'));
     }
 
-    public function searchReport(Request $request) {
-        $cashier = auth()->user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
+    public function searchReport(Request $request)
+    {
+        $cashier = Auth::user()->cashier->where('startime', '>=', \Carbon\Carbon::today())->where('endtime', null)->first();
         $open = ($cashier != null) ? $cashier->count() : 0;
         $dados = $request->all();
         if ($request->to < $request->from) {
             return redirect()->back()->withInput()->with(['info' => 'A data de início deve ser uma data anterior ao fim.', 'open' => $open, 'cashier' => $cashier]);
         }
         $cashiers = $this->cashier
-                ->whereDate('startime', '>=', $request->from)
-                ->whereDate('startime', '<=', $request->to)
-                // ->whereBetween(DB::raw('DATE(startime)'), array($request->from, $request->to))
-                ->latest()
-                ->paginate($this->limit);
+            ->whereDate('startime', '>=', $request->from)
+            ->whereDate('startime', '<=', $request->to)
+            // ->whereBetween(DB::raw('DATE(startime)'), array($request->from, $request->to))
+            ->latest()
+            ->paginate($this->limit);
         return view('payment.cashier.search_report', compact('dados', 'cashiers', 'open', 'cashier'));
     }
-
 }
