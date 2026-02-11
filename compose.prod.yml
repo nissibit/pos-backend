@@ -11,7 +11,7 @@ services:
       # Persistência de storage
       - storage:/var/www/html/storage
       # Arquivo .env de produção
-      - ./prod.env:/var/www/html/.env:ro
+      - ./.env:/var/www/html/.env:ro
 
   nginx:
     image: nginx:latest
