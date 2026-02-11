@@ -24,13 +24,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar projecto (para build sem bind mount)
-COPY . .
+# Copiar apenas composer.json e composer.lock para cache do Docker
+COPY composer.json composer.lock ./
 
-# Instalar dependências (SEM scripts)
+# Instalar dependências (no build)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Permissões mínimas necessárias (Windows-friendly)
+# Copiar todo o restante do projeto
+COPY . .
+
+# Permissões necessárias para Laravel
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 9000
