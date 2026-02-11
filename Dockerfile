@@ -24,15 +24,14 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar projecto
+# Copiar projecto (para build sem bind mount)
 COPY . .
 
 # Instalar dependências (SEM scripts)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Permissões
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+# Permissões mínimas necessárias (Windows-friendly)
+RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 9000
 

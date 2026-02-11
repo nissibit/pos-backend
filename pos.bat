@@ -18,7 +18,7 @@ if not exist %CHROME% (
 )
 
 REM URL da aplicação POS
-set URL=http://localhost/app
+set URL=http://localhost:8000
 
 REM Abre Chrome em modo Kiosk com impressão silenciosa
 %CHROME% --kiosk --kiosk-printing --disable-infobars --disable-session-crashed-bubble %URL%
