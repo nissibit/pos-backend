@@ -28,14 +28,17 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Instalar dependências (no build)
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --optimize-autoloader --no-scripts
 
 # Copiar todo o restante do projeto
 COPY . .
 
 # Permissões necessárias para Laravel
-RUN chmod -R 775 storage bootstrap/cache
+# Permissões mínimas necessárias
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+    
 EXPOSE 9000
 
 CMD ["php-fpm"]
