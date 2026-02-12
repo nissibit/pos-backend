@@ -12,6 +12,8 @@ services:
       - storage:/var/www/html/storage
       # Arquivo .env de produção
       - ./.env:/var/www/html/.env:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:latest
