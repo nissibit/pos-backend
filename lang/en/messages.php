@@ -206,7 +206,7 @@ return [
     'prompt.opened' => 'Opened',
     'prompt.closed' => 'Closed',
 //    Sale
-    'sale.panel' => '<i class="fas fa-dollar-sign"> Sale\'s Panel </i>',
+    'sale.panel' =>  "Sale\'s Panel",
     'sale.customer_id' => 'Customer',
     'sale.customer_name' => 'Name',
     'sale.customer_phone' => 'Phone',

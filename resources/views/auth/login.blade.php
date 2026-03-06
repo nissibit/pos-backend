@@ -1,7 +1,7 @@
 @extends('layouts.guest')
 
 @section('content')
-< <style>
+ <style>
     #password-content {
     position: relative;
     }
@@ -36,8 +36,8 @@
             <div class="w3-row">
                 <div class="w3-col">
                     <label><b>Utilizador</b> <x-icon-required /></label>
-                    <x-input name="email" id="email" onfocus="this.value=this.value;"
-                        value="{{ old('email', old('email'), '') }}" placeholder="Informe o Utilizador"></x-input>
+                    <x-input name="login" id="login" onfocus="this.value=this.value;"
+                        value="{{ old('login', old('login'), '') }}" placeholder="Informe o Utilizador"></x-input>
                 </div>
                 <div class="w3-col">
                     <div id="password-content">
@@ -65,7 +65,7 @@
     <script>
         const showPassword = document.querySelector("#show-password");
         const inputPassword = document.querySelector("#password");
-        document.querySelector("#email").focus()
+        document.querySelector("#login").focus()
         showPassword.addEventListener("click", function() {
             this.classList.toggle("fa-eye-slash");
             let currentType = inputPassword.type;

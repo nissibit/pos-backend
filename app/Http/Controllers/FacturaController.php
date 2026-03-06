@@ -42,18 +42,11 @@ class FacturaController extends Controller
         $this->middleware(['auth']);
     }
 
-    public function index()
+
+
+    public function index(Request $request)
     {
-        $today = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
-        $facturas = Factura::select('id', 'customer_name', 'total', 'day')
-            ->where(function ($query) use ($today, $tomorrow) {
-                $query->whereBetween('created_at', [$today, $tomorrow])
-                    ->orWhere('payed', false);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate($this->limit);
-        return view('factura.index', compact('facturas'));
+        return view('factura.index');
     }
 
     /**
@@ -590,24 +583,48 @@ class FacturaController extends Controller
      */
     public function invoicesForPayment($payed = false)
     {
-        // dd($payed);
         $today = Carbon::today();
         $tomorrow = Carbon::tomorrow();
         $facturas = Factura::select('id', 'customer_name', 'total', 'created_at')
             ->where(function ($query) use ($today, $tomorrow, $payed) {
-                // $query->whereBetween('created_at', [$today, $tomorrow])
-                    $query->when($payed == 'false', function($innerQuery){
-                        $innerQuery->orWhere('payed', false);
+                $query->whereBetween('created_at', [$today, $tomorrow])
+                    ->when($payed == 'false', function ($innerQuery) {
+                        $innerQuery->where('payed', false);
                     })
-                    ->when($payed == 'true', function($innerQuery){
+                    ->when($payed == 'true', function ($innerQuery) {
                         $innerQuery->where('payed', true);
                     });
             })
             ->orderBy('created_at', 'desc')
-            ->take(100)
+            // ->take(100)
             ->get();
-        $flag = $payed =='true' ? '' : 'NÃO';
+        $flag = $payed == 'true' ? '' : 'NÃO';
         $facturasHeader = "Pesquisar facturas {$flag} pagas";
         return view('factura.factura-for-payment', compact('facturas', 'facturasHeader', 'payed'));
+    }
+
+    /**
+     * Brings the list 
+     */
+    public function list(Request $request)
+    {
+        $payed =  $request->payed ?? false;
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+
+        $facturas = Factura::query()
+            ->select(['id', 'customer_name', 'total', 'day', 'created_at', 'payed'])
+            ->where(function ($query) use ($today, $tomorrow, $payed) {
+                $query->whereBetween('created_at', [$today, $tomorrow])
+                    ->when($payed == 'false', function ($innerQuery) {
+                        $innerQuery->orWhere('payed', false);
+                    })
+                    ->when($payed == 'true', function ($innerQuery) {
+                        $innerQuery->where('payed', true);
+                    });
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->limit);
+        return view('factura.list', compact('facturas', 'payed'));
     }
 }

@@ -20,6 +20,17 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes(['register' => false]);
 
+use App\Http\Controllers\Auth\LoginController;
+use App\Livewire\Counter;
+
+// Route::get('/counter', Counter::class);
+
+Route::middleware('guest')->group(function () {
+    Route::view('login', 'auth/login')->name('login');
+    Route::post('login', [LoginController::class, 'authenticate']);
+});
+
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 
 Route::get('/cancel-artigos', "HomeController@cancelItems")->name('cancel.items');
@@ -273,3 +284,4 @@ Route::resource('runoutsell', 'RunOutSellController');
 Route::resource('partner', 'PartnerController');
 Route::resource('loan', 'LoanController');
 Route::resource('devolution', 'DevolutionController');
+

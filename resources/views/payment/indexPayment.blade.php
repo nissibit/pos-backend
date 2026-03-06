@@ -53,9 +53,10 @@ $subactive = 'payment_index';
     let _content = document.getElementById('content-payment');
     let _modalAlerts = document.getElementById('modalAlert');
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         loadingInvoiceForPayment(false);
     });
+    
 
     // Delegation Methods
     document.addEventListener('input', (e) => {

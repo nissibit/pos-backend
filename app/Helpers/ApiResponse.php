@@ -24,7 +24,7 @@ class ApiResponse
     /**
      * Resposta de erro
      */
-    public static function error(string $message = 'Ocorreu um erro', int $code = 500, $errors = null)
+    public static function error(string $message = 'Ocorreu um erro', int  $code = 500, $errors = null)
     {
         $response = [
             'success' => false,

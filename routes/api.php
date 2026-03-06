@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\FacturaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::get("/produtos/fetch/{q?}", "ProductController@fetch")->name("api.product.fetch");
+
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -38,6 +42,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::prefix('/factura')->group(function () {
+    Route::get('/{payed}', [FacturaController::class, 'list'])->name('api.factura.list');
+});
+
 Route::get("/api/banco/index", "APIController@getBancos")->name("api.banco.index");
 Route::get("/api/payment/add", "APIController@AddPaymentItem")->name("api.payment.add");
 Route::get("/api/entry/add", "APIController@AddEntry")->name("api.entry.add");
@@ -52,3 +60,4 @@ Route::get("/api/product/update", "ProductController@updateModal")->name("api.pr
 Route::get("/api/product/get-flap", "ProductController@getFlap")->name("api.product.get-flap");
 Route::get("/api/product/edit/price", "ProductController@editPriceModal")->name("api.product.price.edit.modal");
 Route::get("/api/product/update/price", "ProductController@updatePriceModal")->name("api.product.price.update.modal");
+Route::apiResource('factura', FacturaController::class);

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUser;
-use App\User;
+use App\Models\User;
 use App\Http\Requests\UpdateUser;
 //use \App\Http\Requests\UpdateSenha;
 use Auth;

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Role;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreRole;
-use App\User;
+use App\Models\User;
 use OwenIt\Auditing\Models\Audit;
 
 class RoleController extends Controller {

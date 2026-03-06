@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Product\StoreProduct;
 use App\Http\Requests\Product\StoreProductChild;
 use App\Http\Requests\Product\UpdateProduct;
+use App\Http\Resources\ProductResource;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Conversao;
@@ -27,7 +28,8 @@ use function redirect;
 use function view;
 use Illuminate\Database\Eloquent\Builder;
 
-class ProductController extends Controller {
+class ProductController extends Controller
+{
 
     /**
      * Display a listing of the resource.
@@ -37,12 +39,14 @@ class ProductController extends Controller {
     private $product;
     private $limit = 10;
 
-    function __construct(Product $product) {
+    function __construct(Product $product)
+    {
         $this->product = $product;
-        $this->middleware(['auth', 'revalidate']);
+        $this->middleware(['auth', 'revalidate'])->except(['fetch']);
     }
 
-    public function index() {
+    public function index()
+    {
         $products = $this->product->where('search', true)->latest()->paginate($this->limit);
         return view('product.index', compact('products'));
     }
@@ -52,7 +56,8 @@ class ProductController extends Controller {
      *
      * @return Response
      */
-    public function create() {
+    public function create()
+    {
         $categories = Category::all()->sortBy('name');
         $unities = Unity::all()->sortBy('name');
         return view('product.create', compact('categories', 'unities'));
@@ -64,7 +69,8 @@ class ProductController extends Controller {
      * @param  Request  $request
      * @return Response
      */
-    private function generateCode($id, $field) {
+    private function generateCode($id, $field)
+    {
         $category = Category::findOrfail($id);
         $qtd = $category->products()->withTrashed()->count() + 1;
         $prefixo = substr($category->label, 0, 4);
@@ -76,7 +82,8 @@ class ProductController extends Controller {
         return $code;
     }
 
-    public function updateProducts() {
+    public function updateProducts()
+    {
         $products = $this->product->all();
         foreach ($products as $p) {
             $product = $this->product->find($p->id);
@@ -89,7 +96,8 @@ class ProductController extends Controller {
         }
     }
 
-    public function store(StoreProduct $request) {
+    public function store(StoreProduct $request)
+    {
         $data = $request->all();
         if ($request->generate_barcode ?? '' != '') {
             $data['barcode'] = $this->generateCode($request->category_id, 'barcode');
@@ -114,7 +122,8 @@ class ProductController extends Controller {
      * @param  Product  $product
      * @return Response
      */
-    public function show(Product $product) {
+    public function show(Product $product)
+    {
         return view('product.show', compact('product'));
     }
 
@@ -124,7 +133,8 @@ class ProductController extends Controller {
      * @param  Product  $product
      * @return Response
      */
-    public function edit(Product $product) {
+    public function edit(Product $product)
+    {
         $categories = Category::all()->sortBy('name');
         $unities = Unity::all()->sortBy('name');
         return view('product.edit', compact('product', 'categories', 'unities'));
@@ -137,11 +147,12 @@ class ProductController extends Controller {
      * @param  Product  $product
      * @return Response
      */
-    public function update(UpdateProduct $request, Product $product) {
-//        if ($this->product->where('barcode', $request->barcode)->orWhere('othercode', $request->othercode)->where('id', '!=',$product->id)->count() > 0) {
-//            return redirect()->back()->with(['falha' => 'O Codigo do produto ja existe noutro produto.']);
-//        }
-//                dd($request->all());
+    public function update(UpdateProduct $request, Product $product)
+    {
+        //        if ($this->product->where('barcode', $request->barcode)->orWhere('othercode', $request->othercode)->where('id', '!=',$product->id)->count() > 0) {
+        //            return redirect()->back()->with(['falha' => 'O Codigo do produto ja existe noutro produto.']);
+        //        }
+        //                dd($request->all());
         #Update barcode and other code
         $code = $product->barcode;
         if ($product->category_id != $request->category_id) {
@@ -178,11 +189,12 @@ class ProductController extends Controller {
      * @param  Product  $product
      * @return Response
      */
-    public function destroy(Product $product) {
-//        $stocks = Stock::where('product_id', $product->id)->get();
+    public function destroy(Product $product)
+    {
+        //        $stocks = Stock::where('product_id', $product->id)->get();
         $stocks = $product->stocks();
         foreach ($stocks as $s) {
-//            $stock = Stock::find($s->id);
+            //            $stock = Stock::find($s->id);
             $stock->delete();
         }
         $delete = $product->delete();
@@ -193,51 +205,57 @@ class ProductController extends Controller {
         }
     }
 
-    public function search(Request $request) {
+    public function search(Request $request)
+    {
         $dados = $request->all();
         $string = $request->criterio;
         $products = Product::where('search', true)
-                        ->where('name', 'LIKE', '%' . $string . '%')
-                        ->orWhere(function ($query) use ($string) {
-                            $query->Where('barcode', 'LIKE', '%' . $string . '%');
-                        })->latest()->paginate($this->limit);
+            ->where('name', 'LIKE', '%' . $string . '%')
+            ->orWhere(function ($query) use ($string) {
+                $query->Where('barcode', 'LIKE', '%' . $string . '%');
+            })->latest()->paginate($this->limit);
 
         #dd($products);
         return view('product.search', compact('dados', 'products'));
     }
 
-    public function searchByCategory(Request $request) {
+    public function searchByCategory(Request $request)
+    {
         $dados = $request->all();
         $products = $this->product->where('category_id', $request->category_id)
-                ->latest()
-                ->paginate($this->limit);
+            ->latest()
+            ->paginate($this->limit);
         return view('product.search', compact('dados', 'products'));
     }
 
-    public function searchByUnity(Request $request) {
+    public function searchByUnity(Request $request)
+    {
         $dados = $request->all();
         $products = $this->product->where('unity_id', $request->unity_id)
-                ->latest()
-                ->paginate($this->limit);
+            ->latest()
+            ->paginate($this->limit);
         return view('product.search', compact('dados', 'products'));
     }
 
-    private function searchProduct($string) {
+    private function searchProduct($string)
+    {
         $products = Product::where('search', true)
-                        ->where('name', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('barcode', 'LIKE', '%' . $string . '%')
-                        ->latest()->take($this->limit)->get();
+            ->where('name', 'LIKE', '%' . $string . '%')
+            ->OrWhere('barcode', 'LIKE', '%' . $string . '%')
+            ->latest()->take($this->limit)->get();
         return $products;
     }
 
-    private function searchAllProduct($string) {
+    private function searchAllProduct($string)
+    {
         $products = Product::where('name', 'LIKE', '%' . $string . '%')
-                        ->OrWhere('barcode', 'LIKE', '%' . $string . '%')
-                        ->latest()->take($this->limit)->get();
+            ->OrWhere('barcode', 'LIKE', '%' . $string . '%')
+            ->latest()->take($this->limit)->get();
         return $products;
     }
 
-    public function getProductAutoComplete(Request $request) {
+    public function getProductAutoComplete(Request $request)
+    {
         $string = $request->term ?? '';
         $products = $this->searchProduct($string);
         $result = array();
@@ -249,7 +267,8 @@ class ProductController extends Controller {
         return json_encode($result);
     }
 
-    public function getProductAutoCompleteAll(Request $request) {
+    public function getProductAutoCompleteAll(Request $request)
+    {
         $string = $request->term ?? '';
         $products = $this->searchAllProduct($string);
         $result = array();
@@ -263,7 +282,8 @@ class ProductController extends Controller {
      * 
      */
 
-    public function getProduct(Request $request) {
+    public function getProduct(Request $request)
+    {
         $id = $request->id;
         $searchBy = $request->searchBy;
         $product = Product::where($searchBy ?? 'id', $id)->first();
@@ -271,11 +291,12 @@ class ProductController extends Controller {
         $stock = Stock::where('store_id', $store->id)->where('product_id', $product->id)->first();
         $product->description = $stock != null ? $stock->quantity : 0;
 
-//        dd($request->all());
+        //        dd($request->all());
         return json_encode($product != null ? $product : null);
     }
 
-     public function lastProductAdded() {
+    public function lastProductAdded()
+    {
         $last = auth()->user()->temp_items()->latest()->first() ?? (new TempItem());
         $product = new Product();
         if ($last->product_id != null) {
@@ -289,7 +310,8 @@ class ProductController extends Controller {
         return response()->json($product);
     }
 
-    public function Additems(Request $request) {
+    public function Additems(Request $request)
+    {
         $id = $request->id;
         $operation = $request->operation;
         $searchBy = $request->searchBy;
@@ -300,14 +322,15 @@ class ProductController extends Controller {
         $items = $user->temp_items;
         $this->update_items($items, $product, $operation, $quantity, $account);
         $temps = $user->temp_items()->latest()->get();
-        if($request->view){
+        if ($request->view) {
             return view('layouts.items_added', compact('temps'));
         }
         return json_encode($temps);
     }
 
 
-    private function update_items($items, $product, $operation, $quantity, $account) {
+    private function update_items($items, $product, $operation, $quantity, $account)
+    {
         if ($product != null) {
             $price = $product->price;
             $Account = new Account();
@@ -344,10 +367,11 @@ class ProductController extends Controller {
                 auth()->user()->temp_items()->create($item->toArray());
             }
         }
-//        return $items;
+        //        return $items;
     }
 
-    private function createNewitem($product, $quantity, $price) {
+    private function createNewitem($product, $quantity, $price)
+    {
         $item = new TempItem();
         $item->quantity = $quantity;
         $item->product_id = $product->id;
@@ -359,13 +383,14 @@ class ProductController extends Controller {
         return $item;
     }
 
-    public function addProduct($id) {
-      
+    public function addProduct($id)
+    {
+
         $user = auth()->user();
         $product = $this->product->findOrfail($id);
-       
+
         $temp = $user->temp_items->where('product_id', $product->id)->first();
-           // dd($id, $product, $temp);
+        // dd($id, $product, $temp);
         if ($temp != null) {
             $temp->quantity += 1;
             $temp->update();
@@ -384,14 +409,16 @@ class ProductController extends Controller {
         return redirect()->back()->with(['info' => 'Artigo adicionado!']);
     }
 
-    public function exchangeGet($id) {
+    public function exchangeGet($id)
+    {
         $stores = Store::all();
         $stock = Stock::find($id);
         $product = $stock->product;
         return view('product.exchange', compact('product', 'stock', 'stores'));
     }
 
-    public function exchangePost(Request $request) {
+    public function exchangePost(Request $request)
+    {
         if ($request->product_id == $request->product_destin) {
             return redirect()->back()->withInput()->with(['info' => 'Os produtos envolvidos devem ser diferenres.']);
         } else if ($request->quantity == 0 || $request->quantity < $request->send_quantity) {
@@ -431,20 +458,21 @@ class ProductController extends Controller {
         }
     }
 
-    public function storeChild(StoreProductChild $request) {
-//        dd($request->all());
+    public function storeChild(StoreProductChild $request)
+    {
+        //        dd($request->all());
         if ($request->parent == $request->child) {
             return redirect()->back()->withInput()->with(['info' => 'Os produtos envolvidos devem ser diferenres.']);
         }
         $parent = $this->product->find($request->parent);
         $child = $this->product->find($request->child);
-//        if ($child->category->name != 'RETALHO') {
-//            return redirect()->back()->withInput()->with(['info' => 'O produto DEVE PERTENCER  a categoria RETALHO.']);
-//        }
+        //        if ($child->category->name != 'RETALHO') {
+        //            return redirect()->back()->withInput()->with(['info' => 'O produto DEVE PERTENCER  a categoria RETALHO.']);
+        //        }
         $pChild = ProductChild::where('child', $child->id)->where('parent', $parent->id)->withTrashed();
         if ($pChild->count() > 0) {
             #Vamos adidionar novamente o produto
-//            return redirect()->back()->withInput()->with(['info' => 'O produto já foi adicionado. Contacte o administrador.']);
+            //            return redirect()->back()->withInput()->with(['info' => 'O produto já foi adicionado. Contacte o administrador.']);
             return view('product.child_restore', ['productChild' => $pChild->first(), 'data' => $request->all()]);
         }
         try {
@@ -455,7 +483,8 @@ class ProductController extends Controller {
         }
     }
 
-    public function destroyChild(Request $request) {
+    public function destroyChild(Request $request)
+    {
         try {
             $child = ProductChild::find($request->id);
             $child->delete();
@@ -465,7 +494,8 @@ class ProductController extends Controller {
         }
     }
 
-    public function restoreChild(Request $request) {
+    public function restoreChild(Request $request)
+    {
         try {
             $child_deleted = ProductChild::withTrashed()->where('id', $request->id)->first();
             $child_deleted->restore();
@@ -479,60 +509,63 @@ class ProductController extends Controller {
         }
     }
 
-   public function getStatistic(Request $request) {
-        try{
+    public function getStatistic(Request $request)
+    {
+        try {
             $data = $request->all();
             $product = $this->product->find($request->id);
             $items = Item::select(DB::raw('DATE(created_at) as created_at, SUM(unitprice) as unitprice, SUM(rate) as rate, SUM(subtotal) as total, SUM(quantity) as qtd, COUNT(*) as vendas'))
-                    ->with('product')
-                    ->whereDate('created_at', '>=', $request->from)
-                    ->whereDate('created_at', '<=', $request->to)
-                    ->where('product_id', $product->id)
-                    ->whereHasMorph(
-                        'item',
-                        [Credit::class, Factura::class, Output::class],
-                        function (Builder $query){
-                            $query->select('id', 'total', 'deleted_at');
-                        }
-                    )
-                    ->groupBy(DB::raw("DATE(created_at)"))
-                    ->orderBy('created_at', 'DESC')
-                    ->get();
+                ->with('product')
+                ->whereDate('created_at', '>=', $request->from)
+                ->whereDate('created_at', '<=', $request->to)
+                ->where('product_id', $product->id)
+                ->whereHasMorph(
+                    'item',
+                    [Credit::class, Factura::class, Output::class],
+                    function (Builder $query) {
+                        $query->select('id', 'total', 'deleted_at');
+                    }
+                )
+                ->groupBy(DB::raw("DATE(created_at)"))
+                ->orderBy('created_at', 'DESC')
+                ->get();
 
             return view('product.query_statistic', compact('items', 'product', 'data'));
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             dd("Ocorreu errro ao buscar estatística do produto: {$ex->getMessage}");
         }
     }
 
-    public function getStatisticResume(Request $request) {
-        try{
+    public function getStatisticResume(Request $request)
+    {
+        try {
             $data = $request->all();
             $product = $this->product->find($request->id);
             $items = Item::select(DB::raw('item_type, SUM(quantity) as qtd, COUNT(*) as vendas'))
-                    ->whereDate('created_at', '>=', $request->from)
-                    ->whereDate('created_at', '<=', $request->to)
-                    ->where('product_id', $product->id)
-                    ->whereHasMorph(
-                        'item',
-                        [Credit::class, Factura::class, Output::class],
-                        function (Builder $query){
-                            $query->select('id', 'total', 'deleted_at');
-                        }
-                    )
-                    ->groupBy(DB::raw("item_type"))
-                    // ->toSql(); dd($items);
-                    ->get();
+                ->whereDate('created_at', '>=', $request->from)
+                ->whereDate('created_at', '<=', $request->to)
+                ->where('product_id', $product->id)
+                ->whereHasMorph(
+                    'item',
+                    [Credit::class, Factura::class, Output::class],
+                    function (Builder $query) {
+                        $query->select('id', 'total', 'deleted_at');
+                    }
+                )
+                ->groupBy(DB::raw("item_type"))
+                // ->toSql(); dd($items);
+                ->get();
 
             return response()->json($items);
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             dd("Ocorreu errro ao buscar resumo da estatística do produto: {$ex->getMessage}");
         }
     }
 
 
-    public function getSpecificStatistic(Request $request) {
-         try{
+    public function getSpecificStatistic(Request $request)
+    {
+        try {
             #"DATE(created_at) as created_at, SUM(unitprice) as unitprice, SUM(rate) as rate, SUM(subtotal) as total, SUM(quantity) as qtd, COUNT(*) as vendas, item_type as item_type"
             $items = Item::select(DB::raw('DATE(created_at) as created_at, (unitprice) as unitprice, (rate) as rate, (subtotal) as total, (quantity) as qtd, item_type as item_type'))
                 ->with('product')
@@ -541,7 +574,7 @@ class ProductController extends Controller {
                 ->whereHasMorph(
                     'item',
                     [Credit::class, Factura::class, Output::class],
-                    function (Builder $query){
+                    function (Builder $query) {
                         $query->select('id', 'total', 'deleted_at');
                     }
                 )
@@ -549,14 +582,15 @@ class ProductController extends Controller {
                 ->orderBy('created_at', 'DESC')
                 // ->toSql(); dd($items);
                 ->get();
-            
+
             return response()->json($items);
-         }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             dd("Ocorreu errro ao buscar estatística descritiva do produto: {$ex->getMessage}");
-         }
+        }
     }
 
-    public function setCustomerDetails(Request $request) {
+    public function setCustomerDetails(Request $request)
+    {
         $validatedData = $request->except('_token');
         if (empty($request->session()->get('item'))) {
             $item = new Factura();
@@ -568,22 +602,26 @@ class ProductController extends Controller {
         return json_encode($item);
     }
 
-    public function getFlap(Request $request) {
+    public function getFlap(Request $request)
+    {
         $product = $this->product->findOrfail($request->id);
         return view("product.flap_table", compact("product"));
     }
 
-    public function editModal(Request $request) {
+    public function editModal(Request $request)
+    {
         $product = $this->product->findOrfail($request->id);
         return view("product.edit_modal", compact("product"));
     }
 
-    public function editPriceModal(Request $request) {
+    public function editPriceModal(Request $request)
+    {
         $product = $this->product->findOrfail($request->id);
         return view("product.prices_modal", compact("product"));
     }
 
-    public function updateModal(Request $request) {
+    public function updateModal(Request $request)
+    {
         try {
             $product = $this->product->findOrfail($request->id);
             $product->barcode = $request->barcode;
@@ -600,7 +638,8 @@ class ProductController extends Controller {
         }
     }
 
-    public function updatePriceModal(Request $request) {
+    public function updatePriceModal(Request $request)
+    {
         DB::beginTransaction();
         try {
             $product = \App\Models\Product::find($request->id);
@@ -619,7 +658,8 @@ class ProductController extends Controller {
         }
     }
 
-    public function getChildren($id) {
+    public function getChildren($id)
+    {
         try {
             $product = $this->product->findOrfail($id);
             $children =  $product->children;
@@ -630,11 +670,12 @@ class ProductController extends Controller {
         }
     }
 
-    public function updateChildren(Request $request) {
+    public function updateChildren(Request $request)
+    {
         DB::beginTransaction();
         try {
             // dd($request->all());
-            foreach($request->product_id as $key => $value){
+            foreach ($request->product_id as $key => $value) {
                 $data = [
                     'name' => $request->product_name[$key],
                     'price' => $request->product_price[$key],
@@ -652,10 +693,11 @@ class ProductController extends Controller {
     }
 
 
-    public function formEditable(Request $request) {
+    public function formEditable(Request $request)
+    {
         try {
             // dd($request->all());
-            $goods = $this->product->whereHas('category', function($query){
+            $goods = $this->product->whereHas('category', function ($query) {
                 $query->where('name', 'Editavel');
             })->get();
             // dump($goods);
@@ -665,9 +707,10 @@ class ProductController extends Controller {
             return view("menu.alert", compact("falha"));
         }
     }
-    public function postFormEditable(Request $request) {
+    public function postFormEditable(Request $request)
+    {
         try {
-            if($request->subtotal > 0){
+            if ($request->subtotal > 0) {
                 $user = auth()->user();
                 $temp = $user->temp_items()->create($request->all());
             }
@@ -675,5 +718,13 @@ class ProductController extends Controller {
             return response()->json(['message' => "Ocorreu um erro: {$ex->getMessage()}"]);
         }
     }
-    
+
+    public function fetch(Request $request)
+    {
+        $q = $request->q ?? '';
+        $products = Product::when($q != '', function ($query) use ($q){
+            $query->where('name', 'like', "%{$q}%");
+        })->take($this->limit)->get();
+        return response(ProductResource::collection($products));
+    }
 }

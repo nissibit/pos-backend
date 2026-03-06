@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use OwenIt\Auditing\Models\Audit;
 use App\Role;
 use App\Permission;
-use App\User;
+use App\Models\User;
 
 class AdminController extends Controller {
 

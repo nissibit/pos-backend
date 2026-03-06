@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 
@@ -11,7 +12,9 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -19,7 +22,7 @@ class AuthController extends Controller
     public function register(ApiRegisterRequest $request)
     {
         $data = $request->all();
-        array_merge($data, ['password' => bcrypt($data['password'])]);
+        array_merge($data, ['password' => Hash::make($data['password'])]);
         $data['role'] = $request->has('role') ? $data['role'] : 'user';
         $user = User::create($data);
         event(new UserCreated($user)); // Fire the UserCreated event
@@ -36,9 +39,15 @@ class AuthController extends Controller
         // Se falhar, ele retorna 422 com os detalhes dos campos errados.
 
         try {
-            $credentials = $request->only('email', 'password');
+            $credentials = $request->only('login', 'password');
+            $fieldType = filter_var($credentials['login'], FILTER_VALIDATE_EMAIL)
+                ? 'email'
+                : 'username';
+
+            $credentialsData = array("$fieldType" => $credentials['login'], 'password' => $credentials['password']);
+            // dd($credentialsData);
             // 2. Tentativa de Login
-            if (!Auth::attempt($credentials)) {
+            if (!Auth::attempt($credentialsData)) {
                 // Retorna 401 especificamente para credenciais erradas
                 return ApiResponse::error('Credenciais inválidas (Email ou senha incorretos)', 401);
             }
@@ -54,10 +63,18 @@ class AuthController extends Controller
                 'access_token' => $token,
                 'token_type' => 'Bearer',
             ], "Bem vindo {$this->user->name}");
-        } catch (\Exception $e) {
-            $message = "Erro ao fazer login: {$e->getMessage()}";
-            Log::info($message, $e->getTrace());
-            return ApiResponse::error($message, $e->getCode(), config('app.debug') ? $e->getMessage() : null);
+        } catch (\Throwable $e) {
+            // CORRECÇÃO DO ERRO: Garantir que o código é um inteiro e um código HTTP válido
+            $code = (int) $e->getCode();
+            if ($code < 100 || $code > 599) $code = 500;
+
+            Log::error("Erro no Login: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return ApiResponse::error(
+                "Erro ao fazer login",
+                $code,
+                config('app.debug') ? $e->getMessage() : null
+            );
         }
     }
     /**
@@ -69,7 +86,7 @@ class AuthController extends Controller
             $tempUser = $request()->user()->name;
             $response = $request->user()->currentAccessToken()->delete();
             return ApiResponse::success($response, "Até já {$tempUser}");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = "Erro ao sair do sistema: {$e->getMessage()}";
             Log::info($message, $e->getTrace());
             return ApiResponse::error($message, $e->getCode(), config('app.debug') ? $e->getMessage() : null);
@@ -81,7 +98,7 @@ class AuthController extends Controller
         try {
             $user = $request->user();
             return ApiResponse::success($user, 'User profile retrieved successfully');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = "Falha ao obter dados da sessão: {$e->getMessage()}";
             Log::info($message, $e->getTrace());
             return ApiResponse::error($message, $e->getCode(), config('app.debug') ? $e->getMessage() : null);

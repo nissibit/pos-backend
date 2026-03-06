@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ asset('css/w3.css') }}">
     <link href="{{ asset('css/all.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/w3-theme-teal.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/w3-theme-black.css') }}" rel="stylesheet">
     <link rel="icon" href="{{ URL::asset('/img/favicon.png') }}" type="image/x-icon" />
 
 </head>

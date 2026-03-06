@@ -16,7 +16,7 @@ class TempPaymentItem extends Model {
     ];
 
     public function temp_payment_items() {
-        return $this->belongsTo(App\User::class);
+        return $this->belongsTo(App\Models\User::class);
     }
     
     

@@ -3,54 +3,41 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Http\Requests\Api\LoginRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
-    use AuthenticatesUsers;
-
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
+     * Processar a tentativa de autenticação.
      */
-    protected $redirectTo = '/home';
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function authenticate(LoginRequest $request): RedirectResponse
     {
-        $this->middleware('guest')->except('logout');
-    }
+        // O FormRequest já validou os dados aqui
+        $credentials = $request->only('login', 'password');
 
-    protected function credentials(Request $request)
-    {
-        $field = filter_var($request->get($this->username()), FILTER_VALIDATE_EMAIL)
-            ? $this->username()
+        // Lógica para decidir se é email ou username
+        $fieldType = filter_var($credentials['login'], FILTER_VALIDATE_EMAIL) 
+            ? 'email' 
             : 'username';
 
-        return [
-            $field => $request->get($this->username()),
-            'password' => $request->password,
-        ];
+        if (Auth::attempt([$fieldType => $credentials['login'], 'password' => $credentials['password']], $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            return $this->authenticated($request, Auth::user());
+        }
+
+        return back()->withErrors([
+            'login' => 'As credenciais fornecidas não coincidem com os nossos registos.',
+        ])->onlyInput('login');
     }
 
-    protected function authenticated(Request $request, $user)
+    /**
+     * Lógica de redireccionamento após sucesso (antigo método authenticated).
+     */
+    protected function authenticated(Request $request, $user): RedirectResponse
     {
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -60,6 +47,18 @@ class LoginController extends Controller
             return redirect()->route('editor.panel');
         }
 
-        return redirect('/home');
+        return redirect()->intended('/home');
+    }
+
+    /**
+     * Terminar a sessão.
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

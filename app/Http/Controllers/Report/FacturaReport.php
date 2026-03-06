@@ -33,7 +33,7 @@ class FacturaReport extends Controller
         return response($output, 200, [
             'Content-Type' => 'application/pdf',
             'Conetent-Disposition' => 'inline',
-            'filename' => "VD_{}$payment->nr"
+            'filename' => "VD_{$payment->nr}"
         ]);
     }
 

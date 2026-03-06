@@ -1,8 +1,9 @@
-require('./bootstrap');
 
+import Alpine from 'alpinejs';
+import { persist } from '@alpinejs/persist';
 
-import $ from 'jquery';
-window.$ = window.jQuery = $;
+window.Alpine = Alpine
 
-import 'jquery-ui/ui/widgets/datepicker.js';
+Alpine.plugin(persist)
 
+Alpine.start();

@@ -43,11 +43,11 @@ class PaymentController extends Controller
 
     public function index()
     {
-        $facturas = Factura::latest()->orWhere('payed', false)->where("destroy_username", null)->paginate($this->limit);
-        $payments = $this->payment->latest()->whereDate('created_at', Carbon::today())->paginate($this->limit);
-        $cashier = Auth::user()->cashier->where('startime', '>=', Carbon::today())->where('endtime', null)->first();
-        $open = ($cashier != null) ? $cashier->count() : 0;
-        return view('payment.index', compact('facturas', 'payments', 'open', 'cashier'));
+        // $facturas = Factura::latest()->orWhere('payed', false)->where("destroy_username", null)->paginate($this->limit);
+        // $payments = $this->payment->latest()->whereDate('created_at', Carbon::today())->paginate($this->limit);
+        // $cashier = Auth::user()->cashier->where('startime', '>=', Carbon::today())->where('endtime', null)->first();
+        // $open = ($cashier != null) ? $cashier->count() : 0;
+        return view('payment.index');
     }
 
     /**

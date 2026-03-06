@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use \OwenIt\Auditing\Models\Audit;
-use App\User;
+use App\Models\User;
 
 class RestoreController extends Controller {
 
