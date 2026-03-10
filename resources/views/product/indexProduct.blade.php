@@ -1,21 +1,26 @@
 @extends('layouts.xicompra')
 @section('content')
 <?php
-    $active = 'product';
-    $subactive = 'product_index';
+    $active = 'products';
 ?>
-<div class="row">
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fas fa-cube"> Painel de Produtos  </i></h2>
-                @include('product.menuProduct')
-            </div>
-            <div class="card-body">
-                @include('menu.alert')
-                @yield("content-product")                    
-            </div>
+
+<x-panel-card>
+    <x-slot:title>
+        <h2 class="w3-text-theme">
+            <i class="fas fa-cube"></i>
+            @lang('messages.product.panel')
+        </h2>
+
+    </x-slot:title>
+    <x-slot:menu>
+        @include('product.menuProduct')
+    </x-slot:menu>
+    <div class="">
+        <div id="alerts"></div>
+        @include('menu.alert')
+        <div id="content-products">
+            @yield("content-products")
         </div>
     </div>
-</div>
+</x-panel-card>
 @endsection

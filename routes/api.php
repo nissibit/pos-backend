@@ -39,13 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::name('api.')->group(function () {
+        Route::get("/products/fetch", [ProductController::class, 'fetch'])->name("products.fetch");
         Route::apiResource('products', ProductController::class);
-        Route::get("/products/fetch/{q?}", [ProductController::class, 'fetch'])->name("products.fetch");
 
         // Facturas
+        Route::get('facturas/list/{payed}', [FacturaController::class, 'list'])
+            ->where('payed', '[0-1]') // Só aceita 0 ou 1
+            ->name('facturas.list');
         Route::apiResource('facturas', FacturaController::class);
-        Route::get('facturas/{payed}', [FacturaController::class, 'list'])
-        ->where('payed', '[0-1]') // Só aceita 0 ou 1
-        ->name('facturas.list');
     });
 });

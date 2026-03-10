@@ -246,6 +246,7 @@ return [
     'item.copied' => 'Artigos foram copiados.',
     'item.deleted' => 'Artigos foram removidos.',
     //    product
+    'product.panel' => 'Painel de produtos',
     'product.id' => 'Id',
     'product.barcode' => 'Cod. barras',
     'product.othercode' => 'Outro código',

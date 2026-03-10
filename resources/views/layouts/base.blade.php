@@ -44,6 +44,7 @@
             @include('layouts.sidebar')
             <!-- FIM Sidebar -->
             <div class="w3-white w3-round-large w3-margin-top w3-padding w3-topbar w3-border-theme">
+                
                 @yield('content')
             </div>
         </div>
