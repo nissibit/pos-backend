@@ -27,10 +27,6 @@ class Factura extends Model implements Auditable {
         'payed',
         "destroy_reason", "destroy_username", "destroy_date"
     ];
-    // protected $dates = [
-    //     'day',
-    //     "destroy_date"
-    // ];
 
     protected $casts = [
         'day' =>'date',

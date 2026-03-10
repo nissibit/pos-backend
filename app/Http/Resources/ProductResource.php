@@ -16,8 +16,8 @@ class ProductResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "nome" => $this->name,
-            "preco" => $this->price,
+            "name" => $this->name,
+            "price" => $this->price,
         ];
     }
 }

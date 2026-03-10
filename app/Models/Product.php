@@ -5,15 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class Product extends Model implements Auditable {
+class Product extends Model implements Auditable
+{
 
     use \Illuminate\Database\Eloquent\SoftDeletes;
     use \Askedio\SoftCascade\Traits\SoftCascadeTrait;
     use \OwenIt\Auditing\Auditable;
 
-//    protected $softCascade = [
-//        'items', 'entries', 'stock', 'children'
-//    ];
+    //    protected $softCascade = [
+    //        'items', 'entries', 'stock', 'children'
+    //    ];
     protected $fillable = [
         'barcode',
         'othercode',
@@ -32,53 +33,70 @@ class Product extends Model implements Auditable {
         'description',
         'buying',
         'margem',
+        'parent',
+        'quantity',
     ];
 
-    public function generateTags(): array {
+    public function generateTags(): array
+    {
         return [
             'Product'
         ];
     }
 
-    public function unity() {
+    public function unity()
+    {
         return $this->belongsTo(Unity::class);
     }
 
-    public function category() {
+    public function category()
+    {
         return $this->belongsTo(Category::class);
     }
 
-    public function items() {
+    public function items()
+    {
         return $this->hasMany(Item::class);
     }
 
-    public function prices() {
+    public function prices()
+    {
         return $this->hasMany(Price::class);
     }
 
-    public function entries() {
+    public function entries()
+    {
         return $this->hasMany(Entry::class);
     }
 
-    public function store() {
+    public function store()
+    {
         return $this->belongsToMany(Store::class, 'stocks')->withPivot('quantity')->withTimestamps();
     }
 
-    public function stocks() {
+    public function stocks()
+    {
         return $this->hasMany(Stock::class);
-//        return $this->belongsToMany(Stock::class);
+        //        return $this->belongsToMany(Stock::class);
     }
 
-    public function stock() {
+    public function stock()
+    {
         return $this->hasMany(Stock::class);
     }
 
-    public function children() {
+    public function children()
+    {
         return $this->hasMany(ProductChild::class, 'parent');
     }
 
-    public function parents() {
+    public function parents()
+    {
         return $this->hasMany(ProductChild::class, 'child');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(Product::class, 'parent', 'id');
+    }
 }

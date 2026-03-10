@@ -16,6 +16,7 @@ class Item extends Model implements Auditable {
         'name',
         'barcode',
         'quantity',
+        'dedution',
         'unitprice',
         'rate',
         'subtotal',

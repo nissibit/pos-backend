@@ -15,7 +15,7 @@
                         <th>Contacto</th>
                         <th>Total</th>
                         <th>Data</th>
-                        <th>Copiar</th>
+                        <th>ver / copiar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -25,11 +25,12 @@
                         <td>{{ $factura->customer_name }}</td>
                         <td>{{ $factura->customer_phone }}</td>
                         <td class="text-right">{{ number_format($factura->total ?? 0, 2) }}</td>
-                        <td>{{ $factura->day->format('d-m-Y') }}</td>
-                        <td class="btn-group-sm">
-                            <a href="{{ route('factura.copy', ['id' => $factura->id]) }}" class="btn btn-primary">
-                                <i class="fas fa-copy"> </i>
-
+                        <td>{{ $factura->created_at->format('d-m-Y h:i') }}</td>
+                        <td>
+                            <div class="w3-tiny w3-flex" style="align-items: center; gap: 4px;">
+                                <x-button onclick="displayFactura('{{$factura->id}}')"><i class="fas fa-eye"></i></x-button>
+                                <x-button onclick="copyFactura('{{$factura->id}}')"><i class="fas fa-copy"></i></x-button>
+                            </div>
                         </td>
                     </tr>
 
@@ -39,13 +40,6 @@
                     </tr>
                     @endforelse
                 </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            {{ $facturas->appends(request()->input())->links() }}
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
     </div>

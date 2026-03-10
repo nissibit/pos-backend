@@ -16,6 +16,11 @@
     @else
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     @endif
+    <style>
+        .meu-alinhamento-esquerdino {
+            text-align: left !important;
+        }
+    </style>
 </head>
 
 <body class="w3-light-gray">

@@ -6,7 +6,7 @@ $items = $factura->items()->latest()->get();
     <tr>
         <td colspan="2"><strong>Data:</strong><?php echo $factura->day->format('d-m-Y'); ?></td>
         <td colspan="2" style="text-align: right; "><strong>Pagt.:&nbsp;</strong><?= $payment->nr ?></td>
-    </tr>    
+    </tr>
     <tr>
         <td colspan="4"><strong>Cliente: </strong>{{ $factura->customer_name }}</td>
     </tr>
@@ -18,10 +18,12 @@ $items = $factura->items()->latest()->get();
         <td colspan="2" style="text-align: left"><strong>Tel: </strong>{{ $factura->customer_phone }}</td>
 
     </tr>
-    <tr><td colspan="4">&nbsp;</td></tr>
+    <tr>
+        <td colspan="4">&nbsp;</td>
+    </tr>
     <br />
     <tbody style="border-bottom: 1px dashed; border-top: 1px dashed;">
-        <tr style="border-botton: 1px dashed;">                    
+        <tr style="border-botton: 1px dashed;">
             <th>Qtd.</th>
             <th>Designaçao</th>
             <th style="text-align: center;">Pr.Unt.</th>
@@ -42,7 +44,7 @@ $items = $factura->items()->latest()->get();
             <td>{{ $item->quantity }}</td>
             <td>{{ $item->name }}</td>
             <td style="text-align:center">{{ number_format($item->unitprice ?? 0, 2) }}</td>
-            <td style="text-align:right">{{ number_format($item->subtotal ?? 0, 2) }}</td>   
+            <td style="text-align:right">{{ number_format($item->subtotal ?? 0, 2) }}</td>
             <?php
             $i++;
             $totalQtd += $item->quantity;
@@ -58,7 +60,9 @@ $items = $factura->items()->latest()->get();
         @endforelse
     </tbody>
     <tfoot>
-        <tr><th colspan="4">&nbsp;</th></tr>
+        <tr>
+            <th colspan="4">&nbsp;</th>
+        </tr>
         <tr>
             <th colspan="2">&nbsp;</th>
             <th style="text-align:right">Subtotal</th>
@@ -74,7 +78,7 @@ $items = $factura->items()->latest()->get();
             <th style="text-align:right">IVA(16%)</th>
             <th style="text-align:right">Incluido</th>
         </tr>
-        
+
         <tr>
             <th colspan="2">&nbsp;</th>
             <th style="text-align:right">Total</th>
